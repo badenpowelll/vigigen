@@ -30,14 +30,25 @@ export function obterMcp(): Promise<ChamadaMcp | null> {
 }
 
 // O execute_sql devolve o resultado dentro de um envelope de texto; extraímos o JSON.
-function extrairLinhas(payload: unknown): unknown {
+// O texto de introdução cita a própria etiqueta <untrusted-data-…> antes do bloco,
+// então o JSON é o que fica entre a ÚLTIMA abertura e o fechamento.
+export function extrairLinhas(payload: unknown): unknown {
   let texto: string;
   if (typeof payload === "string") texto = payload;
   else if (payload && typeof payload === "object" && "result" in payload) texto = String((payload as { result: unknown }).result);
   else return payload;
-  const m = texto.match(/<untrusted-data-[^>]*>\s*([\s\S]*?)\s*<\/untrusted-data-/);
-  const corpo = m ? m[1] : texto;
-  return JSON.parse(corpo);
+  const fecho = texto.match(/<\/(untrusted-data-[A-Za-z0-9-]+)>/);
+  let corpo = texto;
+  if (fecho && fecho.index !== undefined) {
+    const abertura = `<${fecho[1]}>`;
+    const ini = texto.lastIndexOf(abertura, fecho.index);
+    if (ini >= 0) corpo = texto.slice(ini + abertura.length, fecho.index);
+  }
+  try {
+    return JSON.parse(corpo.trim());
+  } catch {
+    throw { codigo: "resposta_inesperada", mensagem: corpo.trim().slice(0, 300) } as ErroFonte;
+  }
 }
 
 function literal(v: unknown): string {
@@ -51,15 +62,28 @@ export async function viaConector<T>(funcao: string, args: unknown[] = []): Prom
   if (!mcp) throw { codigo: "sem_conector", mensagem: "Conector indisponível nesta visualização" } as ErroFonte;
   if (!/^painel_[a-z_]+$/.test(funcao)) throw { codigo: "bad_request", mensagem: "função inválida" } as ErroFonte;
   const query = `select public.${funcao}(${args.map(literal).join(", ")}) as r`;
+  const chamar = () => mcp.callTool(SERVIDOR_MCP, FERRAMENTA_MCP, { project_id: PROJETO_SUPABASE, query },
+    { cache: { staleTime: 120_000, gcTime: 3_600_000 } });
+  let res: Awaited<ReturnType<typeof chamar>>;
   try {
-    const res = await mcp.callTool(SERVIDOR_MCP, FERRAMENTA_MCP, { project_id: PROJETO_SUPABASE, query },
-      { cache: { staleTime: 120_000, gcTime: 3_600_000 } });
-    const linhas = extrairLinhas(res.payload) as { r: T }[];
-    return { dado: linhas[0].r, em: res.cache?.storedAt ?? Date.now() };
+    res = await chamar();
   } catch (e) {
-    const err = e as { code?: string; message?: string };
-    throw { codigo: err.code ?? "upstream_error", mensagem: err.message ?? String(e) } as ErroFonte;
+    const err = e as { code?: string; message?: string; retryable?: boolean; retryAfterMs?: number };
+    // Leitura: uma única nova tentativa, só quando o próprio runtime marca o erro como repetível.
+    if (err.retryable) {
+      await new Promise((r) => setTimeout(r, Math.min(err.retryAfterMs ?? 1500, 60_000) + Math.random() * 500));
+      try { res = await chamar(); } catch (e2) {
+        const er2 = e2 as { code?: string; message?: string };
+        throw { codigo: er2.code ?? "upstream_error", mensagem: er2.message ?? String(e2) } as ErroFonte;
+      }
+    } else {
+      throw { codigo: err.code ?? "upstream_error", mensagem: err.message ?? String(e) } as ErroFonte;
+    }
   }
+  const linhas = extrairLinhas(res.payload) as { r: T }[];
+  if (!Array.isArray(linhas) || !linhas[0] || !("r" in linhas[0]))
+    throw { codigo: "resposta_inesperada", mensagem: JSON.stringify(linhas).slice(0, 300) } as ErroFonte;
+  return { dado: linhas[0].r, em: res.cache?.storedAt ?? Date.now() };
 }
 
 export const consultas = {
@@ -79,6 +103,8 @@ export function mensagemErro(e: ErroFonte): string {
     case "consent_required": return "O acesso ao Supabase não foi permitido para esta página. Mostrando o retrato embutido.";
     case "blocked_by_policy": return "A política da organização bloqueia o conector Supabase aqui.";
     case "server_unavailable": return "O Supabase não respondeu agora. Mostrando a última leitura.";
+    case "tool_error": return "O Supabase recusou a consulta. Mostrando o retrato embutido.";
+    case "resposta_inesperada": return "O Supabase respondeu num formato que o painel não reconheceu. Mostrando o retrato embutido.";
     case "sem_conector": return "Sem conector nesta visualização. Mostrando o retrato embutido.";
     default: return `Falha ao ler o banco (${e.codigo}). Mostrando o retrato embutido.`;
   }
