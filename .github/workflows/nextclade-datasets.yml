@@ -19,6 +19,16 @@ jobs:
           nextclade --version > saida/versao.txt
           nextclade dataset list --json > saida/datasets.json
           nextclade dataset list --search dengue | tee saida/dengue.txt
+      - name: Rodar cada dataset nas sequências de exemplo que vêm com ele
+        run: |
+          for d in nextstrain/dengue/all community/v-gen-lab/dengue/denv1 community/v-gen-lab/dengue/denv2 community/v-gen-lab/dengue/denv3 community/v-gen-lab/dengue/denv4; do
+            dir="ds/$d"; out="saida/exemplo/$(echo $d | tr / _)"
+            nextclade dataset get --name "$d" --output-dir "$dir"
+            mkdir -p "$out"; cp "$dir/pathogen.json" "$out/"
+            nextclade run --input-dataset "$dir" --output-tsv "$out/nextclade.tsv" "$dir/sequences.fasta"
+            echo "== $d"; head -1 "$out/nextclade.tsv" | tr '\t' '\n' | grep -n -i -E 'clade|genotype|lineage|serotype|coverage|qc.overallStatus'
+            python3 -c "import csv,sys,collections;r=list(csv.DictReader(open(sys.argv[1]),delimiter='\t'));print(len(r),'seqs; clade:',collections.Counter(x.get('clade') for x in r).most_common(8))" "$out/nextclade.tsv"
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: nextclade-datasets
