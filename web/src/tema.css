@@ -1,0 +1,173 @@
+/* VigiGen — tema único.
+   Layout: cabeçalho institucional em azul IMD; grade de 6 KPIs, depois mapa
+   e série; alertas na lateral; uma coluna no celular, KPIs primeiro.
+   Três paletas com funções que nunca se misturam:
+   - ESTADO (nível de alerta, status, qualidade): 4 cores reservadas
+   - IDENTIDADE (sorotipos, linhagens, doenças): 8 cores em ordem fixa
+   - MAGNITUDE (mapa coroplético): uma matiz, claro -> escuro
+   Nenhum componente usa hex direto: tudo vem destas variáveis. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* institucional (design system do IMD/UFRN) */
+  --imd: #255897;
+  --imd-forte: #1b4377;
+  --imd-texto-sobre: #ffffff;
+  --destaque: #008bda;
+
+  /* neutros com leve viés azul */
+  --fundo: #f3f5f8;
+  --superficie: #ffffff;
+  --superficie-2: #eef2f7;
+  --borda: #d9e0e8;
+  --texto: #2b2f36;
+  --texto-suave: #5d6573;
+
+  /* ESTADO: InfoDengue níveis 1-4 (cor + ícone + rótulo, nunca só a cor) */
+  --estado-1: #0ca30c;
+  --estado-2: #fab219;
+  --estado-3: #ec835a;
+  --estado-4: #d03b3b;
+  --estado-1-texto: #0a6e0a;
+  --estado-2-texto: #8a5a00;
+  --estado-3-texto: #a3461f;
+  --estado-4-texto: #a52626;
+  --estado-nulo: #8b94a3;
+
+  /* IDENTIDADE: ordem fixa, nunca reciclada */
+  --id-1: #2a78d6;
+  --id-2: #eb6834;
+  --id-3: #1baf7a;
+  --id-4: #eda100;
+  --id-5: #e87ba4;
+  --id-6: #008300;
+  --id-7: #6250d6;
+  --id-8: #e34948;
+
+  /* MAGNITUDE: rampa de uma matiz */
+  --mag-1: #cde2fb;
+  --mag-2: #86b6ef;
+  --mag-3: #3987e5;
+  --mag-4: #2a78d6;
+  --mag-5: #1c5cab;
+  --mag-6: #0d366b;
+  --mag-nulo: #e6e9ee;
+  --mag-traco: #ffffff;
+
+  --sombra: 0 1px 2px rgb(20 40 70 / 0.06), 0 2px 8px rgb(20 40 70 / 0.05);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --imd: #1f4c84;
+    --imd-forte: #163a66;
+    --destaque: #4fb3ee;
+    --fundo: #0f1620;
+    --superficie: #17212d;
+    --superficie-2: #1d2937;
+    --borda: #2c3a4b;
+    --texto: #e6ebf2;
+    --texto-suave: #a3afbf;
+    --estado-1: #3cc23c;
+    --estado-2: #fbc14a;
+    --estado-3: #f19a77;
+    --estado-4: #e86464;
+    --estado-1-texto: #7be07b;
+    --estado-2-texto: #ffd27a;
+    --estado-3-texto: #ffb596;
+    --estado-4-texto: #ff9a9a;
+    --estado-nulo: #7d8797;
+    --id-1: #5b9be6;
+    --id-2: #f08a5f;
+    --id-3: #3ccb95;
+    --id-4: #f5b833;
+    --id-5: #f09bbb;
+    --id-6: #39a839;
+    --id-7: #8b7ce6;
+    --id-8: #ef7171;
+    /* rampa re-escalonada: escuro (pouco) -> claro (muito) sobre fundo escuro */
+    --mag-1: #1d3350;
+    --mag-2: #1f4d85;
+    --mag-3: #2a6bc0;
+    --mag-4: #4a8fe0;
+    --mag-5: #86b6ef;
+    --mag-6: #cde2fb;
+    --mag-nulo: #263241;
+    --mag-traco: #0f1620;
+    --sombra: 0 1px 2px rgb(0 0 0 / 0.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --imd: #1f4c84;
+  --imd-forte: #163a66;
+  --destaque: #4fb3ee;
+  --fundo: #0f1620;
+  --superficie: #17212d;
+  --superficie-2: #1d2937;
+  --borda: #2c3a4b;
+  --texto: #e6ebf2;
+  --texto-suave: #a3afbf;
+  --estado-1: #3cc23c;
+  --estado-2: #fbc14a;
+  --estado-3: #f19a77;
+  --estado-4: #e86464;
+  --estado-1-texto: #7be07b;
+  --estado-2-texto: #ffd27a;
+  --estado-3-texto: #ffb596;
+  --estado-4-texto: #ff9a9a;
+  --estado-nulo: #7d8797;
+  --id-1: #5b9be6;
+  --id-2: #f08a5f;
+  --id-3: #3ccb95;
+  --id-4: #f5b833;
+  --id-5: #f09bbb;
+  --id-6: #39a839;
+  --id-7: #8b7ce6;
+  --id-8: #ef7171;
+  --mag-1: #1d3350;
+  --mag-2: #1f4d85;
+  --mag-3: #2a6bc0;
+  --mag-4: #4a8fe0;
+  --mag-5: #86b6ef;
+  --mag-6: #cde2fb;
+  --mag-nulo: #263241;
+  --mag-traco: #0f1620;
+  --sombra: 0 1px 2px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+}
+
+html, body { background: var(--fundo); color: var(--texto); }
+body {
+  font-family: Hind, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--imd);
+}
+h1, h2, h3 { text-wrap: balance; }
+.num { font-variant-numeric: tabular-nums; }
+.gutter {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.cartao {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  box-shadow: var(--sombra);
+}
+.rotulo {
+  font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--texto-suave); font-weight: 600;
+}
+:focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; border-radius: 6px; }
+.hachura { fill: url(#hachura-sem-dado); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

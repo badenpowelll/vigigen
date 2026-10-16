@@ -1,0 +1,34 @@
+# Classificação semanal das sequências com o Nextclade.
+# Segredos necessários no repositório: DATABASE_URL. Variável: NEXTCLADE_DATASET
+# (escolher com `python -m src.pipeline.classify listar`).
+name: nextclade
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 2"   # terça, depois da carga do GenBank
+jobs:
+  classificar:
+    runs-on: ubuntu-latest
+    if: ${{ vars.NEXTCLADE_DATASET != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements.txt
+      - name: Instalar Nextclade CLI
+        run: |
+          curl -fsSL "https://github.com/nextstrain/nextclade/releases/latest/download/nextclade-x86_64-unknown-linux-gnu" -o /usr/local/bin/nextclade
+          chmod +x /usr/local/bin/nextclade
+          nextclade --version
+      - name: Exportar, classificar e carregar
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTCLADE_DATASET: ${{ vars.NEXTCLADE_DATASET }}
+        run: |
+          python -m src.db.load exportar-fasta data/interim/seq.fasta
+          python -m src.pipeline.classify rodar --fasta data/interim/seq.fasta
+          python -m src.db.load carregar-nextclade data/interim/nextclade/nextclade.tsv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nextclade-saida
+          path: data/interim/nextclade/

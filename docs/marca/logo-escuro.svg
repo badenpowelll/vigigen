@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 64" role="img" aria-label="VigiGen">
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 23 V41 M42 23 V41" stroke="#6B6B6B" stroke-width="4.5"/>
+    <path d="M6 32 C8 15, 28 15, 30 32 C32 49, 52 49, 54 32 C52 15, 32 15, 30 32 C28 49, 8 49, 6 32 Z" stroke="#FFFFFF" stroke-width="6.5"/>
+    <path d="M54 32 H61 L68 7 L77 57 L83 32 H113" stroke="#EB6834" stroke-width="6.5"/>
+  </g>
+</svg>

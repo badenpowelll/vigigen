@@ -1,0 +1,13 @@
+data/raw/
+data/interim/
+data/processed/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.pytest_cache/
+web/node_modules/
+web/dist/
+web/dist-artefato/
+supabase/.temp/

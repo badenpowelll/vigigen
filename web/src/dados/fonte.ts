@@ -1,0 +1,85 @@
+// De onde o painel lê os dados, em ordem de preferência:
+// 1. "conector": dentro do claude.ai, pelo conector Supabase do próprio
+//    visitante (capacidade `mcp`), chamando as funções painel_* — dado ao vivo.
+// 2. "supabase": painel publicado na web, com login (supabase-js + RLS).
+// 3. "retrato": cópia embutida no build, com a data em que foi tirada.
+// Em todos os casos o dado vem do banco do VigiGen; nada é gerado aqui.
+import type { Doenca, Malha, Resumo, Retrato, Semana, Serie } from "./tipos";
+
+export const PROJETO_SUPABASE = "tizmhihnggbvjzsmnpne";
+export const SERVIDOR_MCP = "Supabase";
+export const FERRAMENTA_MCP = "execute_sql";
+
+export type Origem = "conector" | "supabase" | "retrato";
+
+export interface ErroFonte { codigo: string; mensagem: string }
+
+const retratos = import.meta.glob("./retrato.json", { eager: true, import: "default" }) as Record<string, Retrato>;
+export const RETRATO: Retrato | null = retratos["./retrato.json"] ?? null;
+
+type ChamadaMcp = {
+  callTool: (s: string, t: string, i: unknown, o?: unknown) => Promise<{ payload?: unknown; cache?: { storedAt: number } }>;
+};
+
+let mcpPromessa: Promise<ChamadaMcp | null> | null = null;
+export function obterMcp(): Promise<ChamadaMcp | null> {
+  if (mcpPromessa) return mcpPromessa;
+  const w = window as unknown as { claude?: { use: (n: string) => Promise<unknown> } };
+  mcpPromessa = w.claude?.use ? (w.claude.use("mcp") as Promise<ChamadaMcp | null>).catch(() => null) : Promise.resolve(null);
+  return mcpPromessa;
+}
+
+// O execute_sql devolve o resultado dentro de um envelope de texto; extraímos o JSON.
+function extrairLinhas(payload: unknown): unknown {
+  let texto: string;
+  if (typeof payload === "string") texto = payload;
+  else if (payload && typeof payload === "object" && "result" in payload) texto = String((payload as { result: unknown }).result);
+  else return payload;
+  const m = texto.match(/<untrusted-data-[^>]*>\s*([\s\S]*?)\s*<\/untrusted-data-/);
+  const corpo = m ? m[1] : texto;
+  return JSON.parse(corpo);
+}
+
+function literal(v: unknown): string {
+  if (v === null || v === undefined) return "null";
+  if (typeof v === "number" && Number.isFinite(v)) return String(Math.trunc(v));
+  return "'" + String(v).replace(/'/g, "''") + "'";
+}
+
+export async function viaConector<T>(funcao: string, args: unknown[] = []): Promise<{ dado: T; em: number }> {
+  const mcp = await obterMcp();
+  if (!mcp) throw { codigo: "sem_conector", mensagem: "Conector indisponível nesta visualização" } as ErroFonte;
+  if (!/^painel_[a-z_]+$/.test(funcao)) throw { codigo: "bad_request", mensagem: "função inválida" } as ErroFonte;
+  const query = `select public.${funcao}(${args.map(literal).join(", ")}) as r`;
+  try {
+    const res = await mcp.callTool(SERVIDOR_MCP, FERRAMENTA_MCP, { project_id: PROJETO_SUPABASE, query },
+      { cache: { staleTime: 120_000, gcTime: 3_600_000 } });
+    const linhas = extrairLinhas(res.payload) as { r: T }[];
+    return { dado: linhas[0].r, em: res.cache?.storedAt ?? Date.now() };
+  } catch (e) {
+    const err = e as { code?: string; message?: string };
+    throw { codigo: err.code ?? "upstream_error", mensagem: err.message ?? String(e) } as ErroFonte;
+  }
+}
+
+export const consultas = {
+  resumo: () => viaConector<Resumo>("painel_resumo"),
+  malha: () => viaConector<Malha>("painel_malha"),
+  semana: (d: Doenca) => viaConector<Semana>("painel_semana", [d]),
+  serie: (g: number | null, d: Doenca, desde = 202001) => viaConector<Serie>("painel_serie", [g, d, desde]),
+};
+
+export function mensagemErro(e: ErroFonte): string {
+  switch (e.codigo) {
+    case "server_not_connected": return "Adicione o conector Supabase em claude.ai → Configurações → Conectores para ver o dado ao vivo.";
+    case "needs_reauth": return "Reconecte o Supabase em claude.ai → Configurações → Conectores.";
+    case "selection_required": return "Escolha qual conector Supabase usar no aviso do claude.ai.";
+    case "not_in_manifest":
+    case "approval_required":
+    case "consent_required": return "O acesso ao Supabase não foi permitido para esta página. Mostrando o retrato embutido.";
+    case "blocked_by_policy": return "A política da organização bloqueia o conector Supabase aqui.";
+    case "server_unavailable": return "O Supabase não respondeu agora. Mostrando a última leitura.";
+    case "sem_conector": return "Sem conector nesta visualização. Mostrando o retrato embutido.";
+    default: return `Falha ao ler o banco (${e.codigo}). Mostrando o retrato embutido.`;
+  }
+}
