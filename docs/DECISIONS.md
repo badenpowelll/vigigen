@@ -79,3 +79,18 @@ Baden não tem chave. As funções seguem o limite sem chave (3 req/s; usamos
 Baden aprovou. Workflow `.github/workflows/nextclade.yml`, semanal na terça
 depois da carga do GenBank. Precisa do repositório no GitHub, do segredo
 `DATABASE_URL` e da variável `NEXTCLADE_DATASET`.
+
+## D-013 · Dataset do Nextclade (pendente de escolha do Baden)
+
+Consulta real em 2026-10-16T12:01Z, Nextclade 3.25.0, `nextclade dataset list --search dengue`
+(workflow `nextclade-datasets`, run 38897706764, artefato com a lista completa em JSON):
+
+| dataset | o que classifica | versão mais recente |
+|---|---|---|
+| `nextstrain/dengue/all` | sorotipo (5 clados), referência NC_002640 | 2026-04-14--11-55-23Z |
+| `community/v-gen-lab/dengue/denv1` | genótipo/linhagem DENV-1 (76 clados) | 2026-10-06--17-37-18Z |
+| `community/v-gen-lab/dengue/denv2` | genótipo/linhagem DENV-2 (95 clados) | 2026-10-06--17-37-18Z |
+| `community/v-gen-lab/dengue/denv3` | genótipo/linhagem DENV-3 (42 clados) | 2026-10-06--17-37-18Z |
+| `community/v-gen-lab/dengue/denv4` | genótipo/linhagem DENV-4 (32 clados) | 2026-10-06--17-37-18Z |
+
+Todos aparecem marcados como `experimental`. Nenhum dataset de chikungunya ou Zika apareceu nesta busca.
