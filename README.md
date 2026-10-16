@@ -18,7 +18,12 @@ a data de cada número visíveis.
   sequenciamento por município e estado, oportunidade por sorotipo e ano,
   qualidade dos metadados.
 - **Painel** (`web/`): visão geral, mapa de calor, séries, alertas, qualidade do
-  dado, perfil do município e fontes.
+  dado, perfil do município e fontes. Publicado com login em
+  https://badenpowelll.github.io/vigigen/ (workflow `pages`).
+- **Administração** (só administradores): auditoria de uso do site (login,
+  cliques, navegação, erros, com data e hora, IP, país e navegador), SLA de
+  atualização dos dados, alertas do sistema e gestão de usuários, perfis e
+  convites (`011_administracao.sql`, Edge Function `acesso`, D-014 a D-016).
 
 ## Como verificar
 ```sql
@@ -32,7 +37,7 @@ Isolamento por território: rode `tests/test_rls.sql` (desfaz tudo ao fim) e vej
 ## Estrutura
 ```
 src/db/migrations/   esquema, RLS, ingestão SQL, agenda, indicadores, painel
-supabase/functions/  ingest-ibge, ingest-infodengue, ingest-genbank
+supabase/functions/  ingest-ibge, ingest-infodengue, ingest-genbank, acesso (primeiro acesso)
 src/ingest/          CLI Python com os mesmos endpoints (reprodução local)
 src/pipeline/        Nextclade (classify.py) e controle de qualidade (qc.py)
 src/indicators/      regras de detecção R1, R2, R3 (deteccao.py)

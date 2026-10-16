@@ -94,3 +94,38 @@ Consulta real em 2026-10-16T12:01Z, Nextclade 3.25.0, `nextclade dataset list --
 | `community/v-gen-lab/dengue/denv4` | genótipo/linhagem DENV-4 (32 clados) | 2026-10-06--17-37-18Z |
 
 Todos aparecem marcados como `experimental`. Nenhum dataset de chikungunya ou Zika apareceu nesta busca.
+
+## D-014 · Metas de SLA de atualização dos dados (16/10/2026) · pendente de confirmação do Baden
+A meta de cada fonte é o maior intervalo da agenda automática (`006_agendamento.sql`)
+mais 24 h de tolerância: InfoDengue 120 h (seg e qui), GenBank 192 h (terça),
+IBGE 768 h (mensal), Nextclade 192 h (terça, GitHub Actions); indicadores 7 h
+(a cada 6 h + 1 h). Carga com status `vazio` conta como sucesso (a fonte
+respondeu, sem registro novo). Cumprimento = % das horas dos últimos 30 dias em
+que a última atualização bem-sucedida estava dentro da meta, contando a partir
+da primeira. Calculado em `public.admin_sla()`, sem tabela intermediária.
+
+## D-015 · Login fechado com código de uso único e trilha de uso do site (16/10/2026)
+**Contexto.** Baden pediu um menu de Administrador com auditoria de tudo que o
+site faz (login, cliques, quem, quando, de onde), SLA, alertas do sistema e
+gestão de usuários. O Supabase Auth não tem SMTP próprio configurado, e o
+envio padrão só entrega e-mail para a equipe do projeto.
+**Decisão.** Cadastro fechado: um gatilho em `auth.users` só aceita e-mail
+com convite liberado. O administrador gera um código de 12 caracteres (48 bits,
+vale 7 dias, uma vez, 10 erros bloqueiam); o banco guarda só o hash. A pessoa
+informa e-mail, código e a senha que ela escolhe na Edge Function `acesso`,
+que cria a conta (ou troca a senha) com a service role. Nenhuma senha passa
+pelo código, pelo banco do VigiGen ou pelo chat. O primeiro administrador foi
+convidado fora do repositório, para não versionar e-mail pessoal.
+Uso do site vai para `public.evento_uso` (append-only): sessão, login, login
+que falhou, saída, navegação, clique (rótulo do elemento, nunca o que se
+digita) e erro. IP, país e navegador vêm dos cabeçalhos da requisição lidos
+pelo banco. Só administradores leem. Contas são desativadas, nunca apagadas,
+para não quebrar a trilha.
+**Pendente.** IP e e-mail de usuários são dados pessoais (LGPD): finalidade
+de segurança e auditoria; prazo de retenção a definir (proposta: 12 meses).
+
+## D-016 · Painel web no GitHub Pages (16/10/2026) · escolhido por Baden em 16/10/2026
+O artefato do claude.ai não permite login próprio nem chamar o Supabase direto
+(CSP). O painel web (`web/`, `npm run build`) passa a ser publicado pelo
+workflow `pages` em https://badenpowelll.github.io/vigigen/. O artefato
+continua existindo, sem login e sem menu Administração.
