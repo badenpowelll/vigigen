@@ -12,12 +12,12 @@ pelo pg_cron via pg_net. Elas só buscam e gravam a resposta crua em
 `public.bruto`; a normalização é SQL (`003_ingestao.sql`), ligada ao `bruto_id`.
 O CLI Python (`src/ingest/`) repete os mesmos endpoints para reprodução local.
 
-## D-002 · Janela histórica 2020–2026 no InfoDengue (16/10/2026) · pendente
+## D-002 · Janela histórica 2020–2026 no InfoDengue (16/10/2026) · confirmada por Baden em 16/10/2026
 A carga inicial pediu `ey_start=2020` até o ano corrente para os 167
 municípios e os 3 agravos. As cargas agendadas seguintes pedem só o ano
-corrente (e o anterior até fevereiro). **Pergunta:** a tese precisa de antes de 2020?
+corrente (e o anterior até fevereiro). Baden confirmou que 2020–2026 basta para a tese.
 
-## D-003 · Malha do IBGE pelo GeoServer oficial (16/10/2026) · pendente
+## D-003 · Malha do IBGE pelo GeoServer oficial (16/10/2026) · aceita por Baden em 16/10/2026
 **Contexto.** `servicodados.ibge.gov.br` (API de Localidades e de Malhas,
 endpoint documentado no Prompt 1) falhou por certificado TLS
 (`UnknownIssuer`) tanto do pg_net quanto do Deno. O erro real está em
@@ -26,7 +26,7 @@ endpoint documentado no Prompt 1) falhou por certificado TLS
 falhar, usa o WFS oficial do IBGE em `geoservicos.ibge.gov.br`, camada
 `CCAR:BC250_2025_lml_municipio_a` (Base Cartográfica Contínua 1:250.000,
 2025), filtrada por `geocodigo LIKE '24%'`. Deu 167 municípios, o total
-oficial do RN. **Pergunta:** aceita essa fonte, ou prefere esperar a API de Localidades?
+oficial do RN. Baden aceitou essa fonte. A rota documentada continua sendo tentada primeiro.
 
 ## D-004 · Mapa em SVG com d3-geo, sem MapLibre (16/10/2026)
 O painel publicado no claude.ai não pode buscar tiles externos (CSP), e o mapa
@@ -45,10 +45,10 @@ com o motivo, até o Nextclade rodar.
 Disponibilidade pública = `GBSeq_create-date`. Só entram coletas com data
 completa (dia/mês/ano), para não inventar dia.
 
-## D-007 · Origem RN pelo geo_loc; "/RN/" no nome da cepa à parte (16/10/2026) · pendente
+## D-007 · Origem RN pelo geo_loc; "/RN/" no nome da cepa à parte (16/10/2026) · confirmada por Baden em 16/10/2026
 Só 3 das 5.876 sequências brasileiras citam RN no `geo_loc_name`. Outras 4
 têm "/RN/" no nome da cepa (1997–98). Elas aparecem no painel, marcadas, mas
-não entram nos indicadores. **Pergunta:** contar como RN?
+não entram nos indicadores. Baden decidiu não contá-las como RN.
 
 ## D-008 · Cargas incrementais (16/10/2026)
 A primeira carga do GenBank gravou ~170 MB de XML cru (≈ 70 MB compactado no
@@ -69,3 +69,13 @@ usa supabase-js e a RLS.
 ## D-010 · Cobertura municipal no último trimestre fechado (16/10/2026)
 O trimestre corrente tem poucas semanas e o GenBank tem defasagem de meses,
 então o resumo usa o último trimestre já encerrado.
+
+## D-011 · Sem chave de API do NCBI (16/10/2026)
+Baden não tem chave. As funções seguem o limite sem chave (3 req/s; usamos
+400 ms entre chamadas). Se a chave existir um dia, basta o segredo
+`NCBI_API_KEY` na Edge Function, e o intervalo cai para 120 ms.
+
+## D-012 · Nextclade no GitHub Actions (16/10/2026)
+Baden aprovou. Workflow `.github/workflows/nextclade.yml`, semanal na terça
+depois da carga do GenBank. Precisa do repositório no GitHub, do segredo
+`DATABASE_URL` e da variável `NEXTCLADE_DATASET`.
