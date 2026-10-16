@@ -1,0 +1,25 @@
+# Lista os datasets oficiais do Nextclade para dengue, sem tocar no banco.
+# Serve para escolher a variável NEXTCLADE_DATASET a partir do nome real.
+name: nextclade-datasets
+on:
+  workflow_dispatch:
+jobs:
+  listar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar Nextclade CLI
+        run: |
+          curl -fsSL "https://github.com/nextstrain/nextclade/releases/latest/download/nextclade-x86_64-unknown-linux-gnu" -o /usr/local/bin/nextclade
+          chmod +x /usr/local/bin/nextclade
+          nextclade --version
+      - name: Listar datasets (dengue)
+        run: |
+          mkdir -p saida
+          date -u +%Y-%m-%dT%H:%M:%SZ > saida/consultado_em.txt
+          nextclade --version > saida/versao.txt
+          nextclade dataset list --json > saida/datasets.json
+          nextclade dataset list --search dengue | tee saida/dengue.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nextclade-datasets
+          path: saida/
