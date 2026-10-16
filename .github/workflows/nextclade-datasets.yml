@@ -7,6 +7,7 @@ jobs:
   listar:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Instalar Nextclade CLI
         run: |
           curl -fsSL "https://github.com/nextstrain/nextclade/releases/latest/download/nextclade-x86_64-unknown-linux-gnu" -o /usr/local/bin/nextclade
@@ -29,6 +30,16 @@ jobs:
             echo "== $d"; head -1 "$out/nextclade.tsv" | tr '\t' '\n' | grep -n -i -E 'clade|genotype|lineage|serotype|coverage|qc.overallStatus'
             python3 -c "import csv,sys,collections;r=list(csv.DictReader(open(sys.argv[1]),delimiter='\t'));print(len(r),'seqs; clade:',collections.Counter(x.get('clade') for x in r).most_common(8))" "$out/nextclade.tsv"
           done
+      - name: Testar o pipeline em dois passos nas sequências de exemplo (sem banco)
+        env:
+          NEXTCLADE_DATASET_SOROTIPO: nextstrain/dengue/all
+          NEXTCLADE_DATASET_LINHAGEM: community/v-gen-lab/dengue/denv{n}
+        run: |
+          pip install -q -r requirements.txt
+          python3 -m src.pipeline.classify rodar --fasta ds/nextstrain/dengue/all/sequences.fasta
+          cp data/interim/nextclade/classificacao.tsv data/interim/nextclade/versoes.json saida/
+          cat saida/versoes.json
+          python3 -c "import csv,collections;r=list(csv.DictReader(open('saida/classificacao.tsv'),delimiter='\t'));print(len(r),'linhas');print(collections.Counter((x['sorotipo'],x['genotipo']) for x in r).most_common());print(r[0])"
       - uses: actions/upload-artifact@v4
         with:
           name: nextclade-datasets

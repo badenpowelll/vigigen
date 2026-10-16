@@ -1,7 +1,7 @@
 """Ponte entre o banco e o pipeline local/Actions.
 
   python -m src.db.load exportar-fasta  data/interim/seq.fasta
-  python -m src.db.load carregar-nextclade data/interim/nextclade/nextclade.tsv
+  python -m src.db.load carregar-nextclade data/interim/nextclade/classificacao.tsv
 
 Precisa de DATABASE_URL (conexão Postgres do Supabase, papel com escrita em
 classificacao e exclusao_qc). Nunca versionar a URL.
@@ -45,10 +45,14 @@ def carregar_nextclade(tsv: Path) -> dict:
             acc = linha["seqName"].split()[0].split("|")[0]
             aprovada, motivo, detalhe = avaliar(linha)
             if not aprovada:
-                con.execute("insert into public.exclusao_qc (accession, motivo, detalhe) values (%s, %s, %s)",
-                            (acc, motivo, detalhe))
+                # uma linha por sequência e motivo, para a rodada semanal não duplicar exclusões
+                con.execute("""insert into public.exclusao_qc (accession, motivo, detalhe)
+                               select %s, %s, %s where not exists (
+                                 select 1 from public.exclusao_qc where accession = %s and motivo = %s)""",
+                            (acc, motivo, detalhe, acc, motivo))
                 excl += 1
                 continue
+            nome_ds, tag_ds = linha["dataset"].rsplit("@", 1)
             con.execute("""
                 insert into public.classificacao (accession, sorotipo, genotipo, linhagem, cobertura, qc_status,
                                                   dataset_nome, dataset_tag, nextclade_versao)
@@ -57,10 +61,9 @@ def carregar_nextclade(tsv: Path) -> dict:
                   linhagem = excluded.linhagem, cobertura = excluded.cobertura, qc_status = excluded.qc_status,
                   dataset_nome = excluded.dataset_nome, dataset_tag = excluded.dataset_tag,
                   nextclade_versao = excluded.nextclade_versao, classificado_em = now()""",
-                (acc, linha.get("serotype") or None, linha.get("genotype") or None,
-                 linha.get("lineage") or linha.get("clade") or None, float(linha["coverage"]),
-                 linha.get("qc.overallStatus") or None,
-                 versoes["dataset_nome"], versoes["dataset_tag"], versoes["nextclade_versao"]))
+                (acc, linha.get("sorotipo") or None, linha.get("genotipo") or None,
+                 linha.get("linhagem") or None, float(linha["coverage"]),
+                 linha.get("qc.overallStatus") or None, nome_ds, tag_ds, versoes["nextclade_versao"]))
             ok += 1
         con.execute("insert into public.auditoria (ator, acao, entidade, detalhe) values (%s, %s, %s, %s)",
                     ("pipeline:nextclade", "classificacao", "classificacao",

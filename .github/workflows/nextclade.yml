@@ -1,6 +1,7 @@
 # Classificação semanal das sequências com o Nextclade.
-# Segredos necessários no repositório: DATABASE_URL. Variável: NEXTCLADE_DATASET
-# (escolher com `python -m src.pipeline.classify listar`).
+# Segredo necessário no repositório: DATABASE_URL. Datasets em dois passos
+# (D-013, escolhidos por Baden em 2026-10-16 a partir de `nextclade dataset list`);
+# as variáveis do repositório, se definidas, substituem os padrões abaixo.
 name: nextclade
 on:
   workflow_dispatch:
@@ -9,7 +10,6 @@ on:
 jobs:
   classificar:
     runs-on: ubuntu-latest
-    if: ${{ vars.NEXTCLADE_DATASET != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,11 +23,13 @@ jobs:
       - name: Exportar, classificar e carregar
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          NEXTCLADE_DATASET: ${{ vars.NEXTCLADE_DATASET }}
+          NEXTCLADE_DATASET_SOROTIPO: ${{ vars.NEXTCLADE_DATASET_SOROTIPO || 'nextstrain/dengue/all' }}
+          NEXTCLADE_DATASET_LINHAGEM: ${{ vars.NEXTCLADE_DATASET_LINHAGEM || 'community/v-gen-lab/dengue/denv{n}' }}
         run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::Falta o segredo DATABASE_URL no repositório"; exit 1; fi
           python -m src.db.load exportar-fasta data/interim/seq.fasta
           python -m src.pipeline.classify rodar --fasta data/interim/seq.fasta
-          python -m src.db.load carregar-nextclade data/interim/nextclade/nextclade.tsv
+          python -m src.db.load carregar-nextclade data/interim/nextclade/classificacao.tsv
       - uses: actions/upload-artifact@v4
         with:
           name: nextclade-saida
