@@ -2,9 +2,9 @@
 # execute_sql (MCP Supabase), quando o contêiner não alcança o Supabase direto.
 # Confere o md5 contra o gravado no banco. Com acesso direto, prefira:
 #   psql "$DATABASE_URL" -Atc "select corpo from app.retrato order by id desc limit 1" > web/src/dados/retrato.json
-# Uso: python scripts/montar_retrato.py <id_retrato> <saida.json>  (D = pasta de resultados do MCP)
+# Uso: python scripts/montar_retrato.py <id_retrato> <saida.json> [pasta de resultados do MCP]
 import json, re, glob, hashlib, sys
-D="/root/.claude/projects/-home-claude/b5c799bd-e24d-5c7b-8e1a-a033492277fc/tool-results"
+D=sys.argv[3] if len(sys.argv)>3 else "/root/.claude/projects/-home-claude/b5c799bd-e24d-5c7b-8e1a-a033492277fc/tool-results"
 rid=int(sys.argv[1]); partes={}
 for f in glob.glob(D+"/mcp-Supabase-execute_sql-*.txt"):
     t=json.loads(open(f).read())["result"]
