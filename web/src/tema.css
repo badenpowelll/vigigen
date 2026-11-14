@@ -222,6 +222,7 @@ a { color: var(--interactive); }
   background-size: 6px 6px; background-repeat: no-repeat;
 }
 .br-campo:hover { background-color: var(--superficie-2); }
+.br-campo.texto { background-image: none; padding-right: var(--spacing-scale-2x); }
 .br-rotulo { font-size: var(--font-size-scale-base); font-weight: var(--font-weight-semi-bold); color: var(--texto); }
 
 /* Rodapé no padrão br-footer: fundo blue-warm-vivid-90, texto claro */

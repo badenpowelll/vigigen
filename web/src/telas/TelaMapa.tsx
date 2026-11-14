@@ -108,7 +108,7 @@ export function TelaMapa({ dados, doenca, g, setG, setDoenca }: Ctx) {
           ? <TresVirus dados={dados} camada={camada} g={g} setG={setG} />
           : <Mapa malha={dados.malha} valores={valores} limites={limites} formatar={formatar} unidade={unidade}
               paleta={camada === "cobertura" ? undefined : doenca}
-              titulo={`Mapa de ${DOENCA_ROTULO[doenca].toLowerCase()}: ${unidade}, ${periodo}`} selecionado={g} aoSelecionar={setG} />)
+              titulo={`Mapa de ${DOENCA_ROTULO[doenca].toLowerCase()}: ${unidade}, ${periodo}`} selecionado={g} aoSelecionar={setG} aoSelecionarEstado={() => setG(null)} />)
         : <Nota>Sem malha municipal carregada.</Nota>}
       {estados && (
         <dl className="mt-4 grid grid-cols-2 gap-3 text-sm lg:grid-cols-5">
@@ -182,7 +182,7 @@ function MapaDoVirus({ d, dados, camada, g, setG }: { d: Doenca; dados: Ctx["dad
       {sem ? (
         <Mapa malha={dados.malha} valores={valores} limites={limites} unidade={unidade} paleta={d} compacto
           formatar={(v) => fmtNum(v, camada === "incidencia" && v < 10 ? 1 : 0)}
-          titulo={`Mapa de ${DOENCA_ROTULO[d].toLowerCase()}: ${unidade}, ${fmtSE(sem.se)}`} selecionado={g} aoSelecionar={setG} />
+          titulo={`Mapa de ${DOENCA_ROTULO[d].toLowerCase()}: ${unidade}, ${fmtSE(sem.se)}`} selecionado={g} aoSelecionar={setG} aoSelecionarEstado={() => setG(null)} />
       ) : <Nota tipo="aviso">Sem semana de {DOENCA_ROTULO[d].toLowerCase()} neste banco.</Nota>}
     </section>
   );

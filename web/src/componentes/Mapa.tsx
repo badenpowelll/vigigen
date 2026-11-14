@@ -14,6 +14,8 @@ interface Props {
   titulo: string;
   selecionado: number | null;
   aoSelecionar: (g: number) => void;
+  /** clique no fundo do mapa (fora dos municípios) ou no botão "Estado inteiro": volta ao RN */
+  aoSelecionarEstado?: () => void;
   /** prefixo da rampa de cor (variáveis CSS --<paleta>-1..6); sem ela, a rampa azul de magnitude */
   paleta?: string;
   /** mapa pequeno (comparação lado a lado): sem rótulo de dica longo */
@@ -45,7 +47,7 @@ export function limitar(v: Vista, W: number, H: number): Vista {
   return { k: v.k, x: Math.min(0, Math.max(minX, v.x)), y: Math.min(0, Math.max(minY, v.y)) };
 }
 
-export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selecionado, aoSelecionar, paleta, compacto }: Props) {
+export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selecionado, aoSelecionar, aoSelecionarEstado, paleta, compacto }: Props) {
   const [foco, setFoco] = useState<number | null>(null);
   const [vista, setVista] = useState<Vista>(VISTA0);
   const [arrastando, setArrastando] = useState(false);
@@ -171,6 +173,10 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
               <line x1="0" y1="0" x2="0" y2="6" stroke="var(--estado-nulo)" strokeWidth="1.4" opacity="0.6" />
             </pattern>
           </defs>
+          {aoSelecionarEstado && (
+            <rect width={W} height={H} fill="transparent" aria-hidden="true"
+              onClick={() => { if (!foiArraste()) aoSelecionarEstado(); }} />
+          )}
           <g transform={`translate(${vista.x},${vista.y}) scale(${vista.k})`}>
             {caminhos.map((c) => {
               const val = valores.get(c.g);
@@ -220,7 +226,12 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
       </div>
       <figcaption className="mt-2 outline-none" tabIndex={-1}>
         <Legenda limites={limites} formatar={formatar} unidade={unidade} cores={CLASSES} />
-        {!compacto && <p className="mt-1 text-xs text-suave">Zoom: botões + e −, duplo clique, Ctrl + rolagem ou pinça no celular; arraste para mover. Teclado: + e − aproximam, 0 volta ao mapa inteiro, Shift + setas movem. Nomes dos municípios aparecem ao aproximar.</p>}
+        {aoSelecionarEstado && !compacto && (
+          <button type="button" className="br-button secondary small mt-2" onClick={aoSelecionarEstado} aria-pressed={selecionado === null}>
+            Ver o Rio Grande do Norte inteiro
+          </button>
+        )}
+        {!compacto && <p className="mt-1 text-xs text-suave">Zoom: botões + e −, duplo clique, Ctrl + rolagem ou pinça no celular; arraste para mover. Teclado: + e − aproximam, 0 volta ao mapa inteiro, Shift + setas movem. Nomes dos municípios aparecem ao aproximar.{aoSelecionarEstado ? " Clique fora dos municípios para ver o estado inteiro." : ""}</p>}
       </figcaption>
     </figure>
   );
