@@ -1,12 +1,17 @@
 // VigiGen — ingestão NCBI GenBank via E-utilities (esearch + efetch GBSet XML).
-// Termo padrão do projeto: "Dengue virus"[Organism] AND Brazil[All Fields].
+// Um termo por agravo (D-018). Sem "agravo" no corpo, vale dengue, como antes.
+// Consultas validadas no esearch em 14/11/2026: DENV 7.203, CHIKV 1.839, ZIKV 519.
 // Limite: 3 req/s sem chave, 10 req/s com NCBI_API_KEY (segredo da função).
 // O XML cru vai para public.bruto; a extração (geo_loc_name/country, data de
 // coleta, sorotipo declarado, hospedeiro, sequência) é feita no banco.
 import { atualizarExecucao, auditar, autorizado, buscar, cliente, dormir, execucaoAtual, gravarBruto, json } from "../_shared/comum.ts";
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils";
-const TERMO_PADRAO = '"Dengue virus"[Organism] AND Brazil[All Fields]';
+const TERMOS: Record<string, string> = {
+  dengue: '"Dengue virus"[Organism] AND Brazil[All Fields]',
+  chikungunya: '"Chikungunya virus"[Organism] AND Brazil[All Fields]',
+  zika: '"Zika virus"[Organism] AND Brazil[All Fields]',
+};
 const LOTE = 100;
 const ORCAMENTO_MS = 100_000;
 
@@ -24,27 +29,39 @@ Deno.serve(async (req) => {
   if (!(await autorizado(req, sb))) return json({ erro: "não autorizado" }, 401);
   const corpo = await req.json().catch(() => ({}));
   const intervalo = Deno.env.get("NCBI_API_KEY") ? 120 : 400;
+  const agravo = String(corpo.agravo ?? "dengue");
+  if (!(agravo in TERMOS)) return json({ erro: `agravo desconhecido: ${agravo}` }, 400);
+  const termo = TERMOS[agravo];
 
   // Carga incremental: depois da primeira carga completa, só registros
   // modificados desde a última carga ok (menos 7 dias de folga), pelo filtro
   // documentado do esearch (datetype=mdat, mindate, maxdate). Evita regravar
   // ~170 MB de XML por semana em public.bruto. {"completo": true} força tudo.
+  // A última carga considerada é a do MESMO termo: o primeiro disparo de um
+  // agravo novo faz a carga completa dele.
   let desde: string | null = null;
   if (corpo.iniciar === true && corpo.completo !== true) {
     const { data: ult } = await sb.from("execucao_ingestao").select("iniciado_em")
-      .eq("fonte", "genbank").eq("status", "ok").order("id", { ascending: false }).limit(1);
+      .eq("fonte", "genbank").eq("status", "ok").eq("parametros->>termo", termo)
+      .order("id", { ascending: false }).limit(1);
     if (ult && ult.length) {
       const d = new Date(new Date(ult[0].iniciado_em).getTime() - 7 * 864e5);
       desde = `${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}`;
     }
   }
   const exec = await execucaoAtual(sb, "genbank", corpo.iniciar === true, {
-    termo: corpo.termo ?? TERMO_PADRAO,
+    agravo,
+    termo,
     desde,
     ids: null,
     cursor: 0,
   });
   if (!exec) return json({ ok: true, mensagem: "nenhuma execução em andamento" });
+  // Uma execução de cada vez: se outro agravo está em andamento, este disparo
+  // não começa (o próximo agendamento tenta de novo) e a outra segue normalmente.
+  if (corpo.iniciar === true && (exec.parametros as { termo?: string }).termo !== termo) {
+    return json({ ok: false, ocupado: true, em_andamento: (exec.parametros as { agravo?: string }).agravo ?? "dengue" }, 409);
+  }
   const p = exec.parametros as { termo: string; desde?: string | null; ids: string[] | null; cursor: number; count?: number };
   const inicio = Date.now();
   let registros = exec.registros ?? 0;
@@ -82,7 +99,7 @@ Deno.serve(async (req) => {
     // 2) efetch em lotes, até o orçamento de tempo
     while (p.cursor < p.ids.length && Date.now() - inicio < ORCAMENTO_MS) {
       const lote = p.ids.slice(p.cursor, p.cursor + LOTE);
-      const params = { db: "nuccore", rettype: "gb", retmode: "xml", ...comuns() };
+      const params: Record<string, string> = { db: "nuccore", rettype: "gb", retmode: "xml", ...comuns() };
       const form = new URLSearchParams({ ...params, id: lote.join(",") });
       const r = await buscar(`${EUTILS}/efetch.fcgi`, {
         method: "POST",

@@ -41,7 +41,10 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
 
   return (
     <figure className="min-w-0">
-      <div className="relative overflow-hidden rounded-xl border border-borda bg-[var(--superficie-2)]">
+      <button type="button" className="pular-mapa" onClick={(e) => (e.currentTarget.parentElement?.querySelector("figcaption") as HTMLElement | null)?.focus()}>
+        Pular o mapa ({caminhos.length} municípios); a mesma informação está em "Ver como tabela"
+      </button>
+      <div className="relative overflow-hidden rounded-[var(--raio)] border border-borda bg-[var(--superficie-2)]">
         <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="group" aria-label={titulo}>
           <defs>
             <pattern id="hachura-sem-dado" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -52,10 +55,10 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
           {caminhos.map((c) => {
             const val = valores.get(c.g);
             const tem = val && val.v !== null && val.v !== undefined;
-            const fill = tem ? CLASSES[classe(val!.v as number, limites)] : "url(#hachura-sem-dado)";
+            const fill = !tem ? "url(#hachura-sem-dado)" : val!.v === 0 ? "var(--superficie)" : CLASSES[classe(val!.v as number, limites)];
             const rotulo = `${c.n}: ${tem ? `${formatar(val!.v as number)} ${unidade}` : `sem dado${val?.motivo ? ` (${val.motivo})` : ""}`}`;
             return (
-              <path key={c.g} d={c.d} fill={fill} stroke="var(--mag-traco)" strokeWidth={0.6}
+              <path key={c.g} d={c.d} fill={fill} stroke={tem && val!.v === 0 ? "var(--borda)" : "var(--mag-traco)"} strokeWidth={0.6}
                 tabIndex={0} role="button" aria-label={rotulo} aria-pressed={selecionado === c.g}
                 onMouseEnter={() => setFoco(c.g)} onMouseLeave={() => setFoco(null)}
                 onFocus={() => setFoco(c.g)} onBlur={() => setFoco(null)}
@@ -75,7 +78,7 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
           ))}
         </svg>
         {infoAtivo && (
-          <div className="pointer-events-none absolute left-2 top-2 max-w-[70%] rounded-lg border border-borda bg-superficie/95 px-3 py-1.5 text-sm shadow">
+          <div className="pointer-events-none absolute left-2 top-2 max-w-[70%] rounded-[var(--surface-rounder-sm)] border border-borda bg-superficie/95 px-3 py-1.5 text-sm shadow">
             <strong>{infoAtivo.n}</strong>
             <div className="num text-suave">
               {valAtivo && valAtivo.v !== null ? `${formatar(valAtivo.v)} ${unidade}` : `sem dado${valAtivo?.motivo ? `: ${valAtivo.motivo}` : ""}`}
@@ -84,7 +87,7 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
           </div>
         )}
       </div>
-      <figcaption className="mt-2">
+      <figcaption className="mt-2 outline-none" tabIndex={-1}>
         <Legenda limites={limites} formatar={formatar} unidade={unidade} />
       </figcaption>
     </figure>
@@ -106,6 +109,9 @@ function Legenda({ limites, formatar, unidade }: { limites: number[]; formatar: 
           <span className="inline-block h-3 w-5 rounded-sm border border-borda" style={{ background: f.cor }} />{f.r}
         </span>
       ))}
+      <span className="num inline-flex items-center gap-1">
+        <span className="inline-block h-3 w-5 rounded-sm border border-borda" style={{ background: "var(--superficie)" }} />0 (zero observado)
+      </span>
       <span className="inline-flex items-center gap-1">
         <svg width="20" height="12" aria-hidden="true"><rect width="20" height="12" fill="url(#hachura-sem-dado)" stroke="var(--borda)" /></svg>
         sem dado
@@ -130,7 +136,7 @@ export function limitesQuantis(vals: number[], k = 5): number[] {
 
 export function TabelaMapa({ linhas, unidade }: { linhas: { n: string; v: number | null; motivo?: string }[]; unidade: string }) {
   return (
-    <div className="max-h-80 overflow-auto rounded-xl border border-borda">
+    <div className="max-h-80 overflow-auto rounded-[var(--raio)] border border-borda" tabIndex={0} role="region" aria-label={`Tabela do mapa: ${unidade}`}>
       <table className="w-full text-sm">
         <caption className="sr-only">Tabela alternativa ao mapa</caption>
         <thead className="sticky top-0 bg-[var(--superficie-2)] text-left">

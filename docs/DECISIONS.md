@@ -94,3 +94,216 @@ Consulta real em 2026-10-16T12:01Z, Nextclade 3.25.0, `nextclade dataset list --
 | `community/v-gen-lab/dengue/denv4` | genótipo/linhagem DENV-4 (32 clados) | 2026-10-06--17-37-18Z |
 
 Todos aparecem marcados como `experimental`. Nenhum dataset de chikungunya ou Zika apareceu nesta busca.
+
+## D-014 · Metas de SLA de atualização dos dados (16/10/2026) · pendente de confirmação do Baden
+A meta de cada fonte é o maior intervalo da agenda automática (`006_agendamento.sql`)
+mais 24 h de tolerância: InfoDengue 120 h (seg e qui), GenBank 192 h (terça),
+IBGE 768 h (mensal), Nextclade 192 h (terça, GitHub Actions); indicadores 7 h
+(a cada 6 h + 1 h). Carga com status `vazio` conta como sucesso (a fonte
+respondeu, sem registro novo). Cumprimento = % das horas dos últimos 30 dias em
+que a última atualização bem-sucedida estava dentro da meta, contando a partir
+da primeira. Calculado em `public.admin_sla()`, sem tabela intermediária.
+
+## D-015 · Login fechado com código de uso único e trilha de uso do site (16/10/2026)
+**Contexto.** Baden pediu um menu de Administrador com auditoria de tudo que o
+site faz (login, cliques, quem, quando, de onde), SLA, alertas do sistema e
+gestão de usuários. O Supabase Auth não tem SMTP próprio configurado, e o
+envio padrão só entrega e-mail para a equipe do projeto.
+**Decisão.** Cadastro fechado: um gatilho em `auth.users` só aceita e-mail
+com convite liberado. O administrador gera um código de 12 caracteres (48 bits,
+vale 7 dias, uma vez, 10 erros bloqueiam); o banco guarda só o hash. A pessoa
+informa e-mail, código e a senha que ela escolhe na Edge Function `acesso`,
+que cria a conta (ou troca a senha) com a service role. Nenhuma senha passa
+pelo código, pelo banco do VigiGen ou pelo chat. O primeiro administrador foi
+convidado fora do repositório, para não versionar e-mail pessoal.
+Uso do site vai para `public.evento_uso` (append-only): sessão, login, login
+que falhou, saída, navegação, clique (rótulo do elemento, nunca o que se
+digita) e erro. IP, país e navegador vêm dos cabeçalhos da requisição lidos
+pelo banco. Só administradores leem. Contas são desativadas, nunca apagadas,
+para não quebrar a trilha.
+**Pendente.** IP e e-mail de usuários são dados pessoais (LGPD): finalidade
+de segurança e auditoria; prazo de retenção a definir (proposta: 12 meses).
+
+## D-016 · Painel web no GitHub Pages (16/10/2026) · escolhido por Baden em 16/10/2026
+O artefato do claude.ai não permite login próprio nem chamar o Supabase direto
+(CSP). O painel web (`web/`, `npm run build`) passa a ser publicado pelo
+workflow `pages` em https://badenpowelll.github.io/vigigen/. O artefato
+continua existindo, sem login e sem menu Administração.
+
+## D-017 · Visual no Padrão Digital de Governo (14/11/2026) · pedido por Baden
+**Contexto.** Baden pediu o design system do governo federal (gov.br DS,
+versão 3.7.0, https://www.gov.br/ds/) no painel, no lugar do visual IMD/UFRN.
+**Decisão.** `web/src/tema.css` passa a usar os tokens do gov.br: primária
+`blue-warm-vivid-70` (#1351b4), neutros `gray-2/5/20/60/80`, sucesso
+`green-cool-vivid-50`, escala do mapa `blue-warm-vivid-10` a `-80`, cantos de
+8 px e sombra `surface-shadow-sm`. Cabeçalho claro com abas sublinhadas, como
+no padrão. Fonte Rawline quando instalada, com Raleway (Google Fonts) como
+substituta. Valores conferidos no `core.css` 3.0.0 do GOVBR-DS servido pela
+Receita Federal; amarelo (#ffcd07) e vermelho (#e52207) de alerta não
+puderam ser conferidos nessa leitura. A marca do VigiGen continua a própria:
+o painel não usa a marca gov.br, porque não é um serviço do governo federal.
+**Complemento (14/11/2026).** Baden autorizou trocar todas as cores e botões.
+O painel passa a depender do pacote oficial `@govbr-ds/core` 3.7.0 (MIT, npm),
+do qual importa só `core-tokens` e os componentes `br-button` e `br-message`,
+sem o reset global, que brigaria com o Tailwind. Todos os tokens acima foram
+reconferidos na 3.7.0, inclusive o amarelo e o vermelho. Botões e
+alternadores viram `br-button` (primário e secundário, tamanho small), notas
+viram `br-message` (info e warning, com ícone SVG próprio no lugar do Font
+Awesome), o seletor de território segue as medidas do `br-input` (o
+`br-select` do DS depende de JS), o foco usa o padrão do DS (tracejado de
+4 px, `gold-vivid-40`) e o rodapé segue o `br-footer` (fundo
+`blue-warm-vivid-90`). No escuro, as variáveis equivalem à classe
+`dark-mode` do DS.
+
+## D-018 — Camada genômica multiagravo (14/11/2026)
+
+**Contexto.** O seletor de agravo do painel trocava os dados do InfoDengue,
+mas a camada genômica só tinha dengue: na aba Qualidade do dado,
+chikungunya e Zika mostravam números de dengue. Baden pediu a integração
+real de CHIKV e ZIKV pelo mesmo caminho do GenBank.
+
+**Decisão.**
+- Um termo por agravo no esearch, validados em 14/11/2026 15:24 UTC (resposta
+  em `data/raw/genbank/`): `"Dengue virus"[Organism] AND Brazil[All Fields]`
+  (7.203), `"Chikungunya virus"[Organism] AND Brazil[All Fields]` (1.839),
+  `"Zika virus"[Organism] AND Brazil[All Fields]` (519).
+- `sequencia.agravo` é coluna gerada a partir de `GBSeq_organism`
+  (`app.agravo_de`). Nenhum outro campo decide o vírus. Sorotipo DENV-1..4 só
+  é gravado para dengue (gatilho `sequencia_sorotipo_so_dengue`).
+- `indicador` e `alerta` ganham `agravo` (default `dengue` para o legado). A
+  chave única do indicador passa a incluir o agravo. `calcular_indicadores()`
+  roda um agravo por vez, com casos do mesmo agravo no denominador; agravo sem
+  sequência não grava indicador (o painel mostra "sem dado", não zero).
+- Genoma quase completo por referência RefSeq conferida por esummary:
+  NC_001477.1 (DENV-1, 10.735 nt), NC_004162.2 (CHIKV, 11.826 nt),
+  NC_012532.1 (ZIKV, 10.794 nt). Dengue mantém 9.000 nt; CHIKV (9.914 nt) e
+  ZIKV (9.046 nt) usam a mesma fração (83,8%) como critério **provisório**, a
+  validar cientificamente.
+- Nextclade continua só para dengue: `exportar-fasta` e `detectar-alertas`
+  filtram dengue. Classificação de CHIKV e ZIKV fica pendente até verificar
+  os datasets (o índice data.clades.nextstrain.org não é alcançável deste
+  ambiente). Alertas R1–R3 de CHIKV/ZIKV ficam indisponíveis até lá.
+- Ingestão: `ingest-genbank` aceita `{"agravo": ...}`; a carga incremental usa
+  a última carga do mesmo termo (a primeira de um agravo novo é completa).
+  Três agendamentos diários (10:00 dengue, 11:20 chikungunya, 12:40 Zika UTC).
+  Uma execução por vez: disparo com outra em andamento responde 409.
+- Painel: `painel_resumo()` mantém as chaves antigas só com dengue e ganha
+  `genomica.{dengue,chikungunya,zika}` (`painel_genomica`). Todas as abas
+  leem o bloco do agravo escolhido; sem bloco, a tela diz o motivo.
+
+**Estado.** Código e migração 013 na PR #2, testados num Postgres local
+(`tests/fixtures/sql/FIXTURE_teste_013.sql`). Nada aplicado em produção até autorização do
+Baden: aplicar a 013, publicar a Edge Function e disparar a primeira carga.
+
+> Nota de numeração (14/11/2026): a PR #1 (menu de administração) já usa D-014
+> (metas de SLA), D-015 (acesso e trilha de uso) e D-016 (GitHub Pages). Para as
+> duas PRs poderem ser juntadas sem colisão, as decisões desta linha foram
+> renumeradas: gov.br passou de D-014 para D-017 e multiagravo de D-015 para D-018.
+
+## D-019 — Auditoria corretiva, acessibilidade e SLA no painel (14/11/2026)
+
+Pedido por Baden (auditorias de 14/11). O que mudou e por quê:
+
+- **Nenhum número de um agravo aparece em outro.** Alertas e classificações são
+  filtrados por agravo e território; o total global de classificações não é mais
+  usado nas telas. Testes em `web/tests/multiagravo.test.ts` provam isso com
+  dados FIXTURE_.
+- **Estados explícitos da detecção**: sem sequências, aguardando classificação,
+  QC insuficiente, detecção pendente, concluída sem alertas, alertas pendentes e
+  revisados. "Sem alerta" só aparece com execução da detecção registrada
+  (`painel_resumo().deteccao`, lida da auditoria).
+- **Atualidade por agravo**: a última SE publicada de cada agravo é comparada
+  com a SE corrente (em dia até 4 semanas, atrasada até 12, parada acima). A data
+  de leitura do banco não conta como atualidade.
+- **Nome do indicador**: "razão de sequências públicas identificáveis por casos
+  notificados", para não ser lido como cobertura laboratorial. Mapa distingue
+  indicador não calculado, zero observado e sem denominador.
+- **Limiar de genoma quase completo** de CHIKV e ZIKV marcado como exploratório.
+- **Relatórios** levam território, execução da fonte (nº), link verificável da
+  fonte, versão do método e ressalvas.
+- **Migrações 014 (procedência do IBGE), 015 (permissões) e 016 (SLA com meta
+  de 95%)**, testadas em Postgres descartável e **não aplicadas**.
+- **Acessibilidade** (meta WCAG 2.2 AA): pular para o conteúdo, tema claro,
+  escuro ou do sistema, atalhos Alt+Shift (não de tecla única, critério 2.1.4),
+  grupos de opção com setas, gráficos percorríveis pelo teclado com dica
+  flutuante, dicas "i" nos indicadores, regiões roláveis focáveis. Verificado com
+  axe-core 4.10.2 nas 8 abas, nos dois temas, em 1366 px e 390 px: zero violações.
+
+## D-020 — SINAN (agregado) e CNES pela API de Dados Abertos do Ministério da Saúde (14/11/2026)
+
+Pedido por Baden ("implementar essas apis https://apidadosabertos.saude.gov.br/v1/").
+Swagger v1.8.32, sondado do GitHub Actions em 14/11/2026 (workflow `sondar-fontes`).
+
+- **A rota do SINAN devolve microdados**: um registro por notificação, com
+  idade, sexo, raça, escolaridade, gestação e datas. A regra 4 proíbe guardar
+  isso. O parâmetro `campos`, que pediria só as colunas da chave, respondeu
+  200 com `limit=5` (20 s) e **502 após 60 s** com `limit=1000` nos três agravos
+  (sondagem de 14/11/2026), então não serve para a carga. A função soma na memória por uma chave sem coluna pessoal (ano, semana
+  de notificação, município notificador, município de residência,
+  classificação final, critério e sorotipo) e grava em `public.bruto` só essas
+  contagens, com o sha256, o tamanho e o número de registros da resposta
+  original. **Exceção à regra 3**: a resposta original não é gravada; o sha256
+  prova qual resposta foi somada. Python e Edge Function agregam igual (teste).
+- **Filtro por município da unidade notificadora** (`id_municip`), não da
+  residência. Por isso a função percorre os 167 municípios do RN e o painel
+  soma por residência (`id_mn_resi`), comparável ao InfoDengue. Residência
+  fora do RN fica sem geocódigo (só estado).
+- **Classificação final em código**, como o SINAN publica; o dicionário de
+  dados do SINAN traduz. Nada é recodificado.
+- **CNES**: cadastro público, gravado inteiro. Na tabela normalizada, o nome de
+  estabelecimento sem CNPJ (pessoa física) fica nulo.
+- **Volumes medidos**: dengue em Natal, 5.289 notificações em 2025 e 2.290 em
+  2026 (páginas de 1000); 6.201 estabelecimentos ativos no RN (311 páginas de 20).
+- **Licença**: os conjuntos de arboviroses no dados.gov.br estão sob CC BY-ND
+  3.0; publicar contagens derivadas pede leitura jurídica antes do painel público.
+- Migração 017 (tabelas, view da execução vigente, `painel_sinan`) e 019
+  (agendamento) **não aplicadas**; dependem da aprovação do Baden.
+
+## D-021 — Clima das estações do INMET no RN (14/11/2026)
+
+Pedido por Baden ("conectar api do INMET").
+
+- A rota `https://apitempo.inmet.gov.br/estacao/{inicio}/{fim}/{codigo}`
+  respondeu **204 sem corpo** em 14/11/2026 para A304 (Natal); `/estacoes/T`
+  respondeu 200. Sem token documentado, a rota de dados não é usada.
+- Fonte usada: o arquivo anual oficial
+  `https://portal.inmet.gov.br/uploads/dadoshistoricos/<ano>.zip` (2026: 82 MB,
+  634 estações, até 31/10/2026). Sete estações do RN: A304 Natal, A316 Caicó,
+  A317 Macau, A318 Mossoró, A340 Apodi, A367 Santa Cruz, A372 Ipanguaçu.
+- O ZIP é grande demais para uma Edge Function; quem baixa é o CLI
+  (`python -m src.ingest --fonte inmet --ano 2026 [--banco]`), que grava o ZIP
+  em `data/raw/inmet/` e, com `--banco`, cada CSV do RN inteiro em
+  `public.bruto`. A migração 018 normaliza chuva, temperatura e umidade
+  horárias e soma por semana de domingo a sábado; semana com hora faltando não
+  tem soma de chuva. Municípios sem estação não recebem valor interpolado.
+- Migração 018 **não aplicada**.
+## D-022 — Detecção de focos: R4 (aumento local) e R5 (aglomerado) (14/11/2026)
+
+Pedido por Baden em 14/11/2026 ("implementar esses 3 pontos que iremos
+sustentar"), a partir da proposta do módulo de focos. Detalhes em `docs/FOCOS.md`.
+
+- **R4, aumento local: EARS C2** por município e semana, sobre
+  `caso_semanal.casos_estimados` (nowcast do InfoDengue; casos notificados quando
+  nulo). Linha de base t-3 a t-9, limiar 3 desvios, piso de 1 caso no desvio,
+  mínimo de 5 casos. Escolhido por ser simples, documentado e explicável às equipes.
+- **R5, aglomerado: varredura espaço-temporal prospectiva de Kulldorff, modelo
+  de permutação**, implementada em Python/NumPy (`src/indicators/focos.py`).
+  Período de estudo de 52 semanas, até 10 municípios vizinhos (centroides do
+  IBGE), até 4 semanas, 999 réplicas, intervalo de recorrência mínimo de 52
+  semanas, pelo menos 2 municípios e 5 casos. Ainda **em validação**: comparar
+  com o SaTScan nos mesmos dados é tarefa do doutorado. Farrington flexível fica
+  como comparação futura (implementação de referência em R).
+- **Episódio**: um alerta por foco, não um por semana. Um sinal abre episódio
+  se o município ficou 4 semanas sem sinal R4/R5 do mesmo agravo; senão o
+  prolonga. Só a abertura vai para `public.alerta` (status "novo", revisão humana).
+- **Margem de erro do local de infecção** (para quando houver exame por
+  território): cada caso é repartido entre residência, vizinhos e destinos de
+  deslocamento em três cenários (100%, 70% e 50% na residência); o território
+  mostra a faixa mínimo–máximo e o sinal é "robusto" quando aparece em todos os
+  cenários, "sinal fraco" quando só em parte.
+- **Contrato de entrada `public.exame_territorial`** (migração 020, não
+  aplicada): só contagens agregadas na origem por setor censitário ou bairro,
+  sem dado pessoal; contagem de 1 a 4 abaixo do município é recusada pelo banco.
+  Fica vazia até o acordo com o LAIS/UFRN (PEP) ou a SESAP-RN (GAL).
+- **Nada em produção**: a migração 020 não foi aplicada e o workflow `focos.yml`
+  só roda manualmente; o agendamento fica comentado até autorização do Baden.

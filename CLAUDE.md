@@ -5,7 +5,7 @@ Integra sequências genômicas de arbovírus a dados de notificação e de
 território, e converte isso em indicadores e alertas para secretarias
 municipais. Caso de uso: dengue, chikungunya e Zika no Rio Grande do Norte.
 
-Este código sustenta um projeto de doutorado em Bioinformática (UFERSA). O
+Este código sustenta um projeto de doutorado em Bioinformática (UFRN/IMD). O
 método é Design Science Research: o artefato é construído e avaliado, e a
 avaliação precisa ser reproduzível por terceiros.
 
@@ -37,7 +37,9 @@ avaliação precisa ser reproduzível por terceiros.
 - Ingestão local/reprodutível: CLI Python 3.11+ em `src/ingest/`
   (`python -m src.ingest --fonte ...`), mesmos endpoints, grava em `data/raw/`.
 - Node 20+ e React + TypeScript + Vite + Tailwind para o painel (`web/`).
-  Visual segue o design system do Instituto Metrópole Digital (UFRN).
+  Visual segue o Padrão Digital de Governo (gov.br Design System 3.7.0, pacote @govbr-ds/core): tokens
+  de cor, tipografia Rawline (Raleway como substituta) e superfícies; a marca
+  do VigiGen continua a própria, sem a marca gov.br (D-017).
 - Nextclade CLI para classificação de sorotipo e linhagem (`src/pipeline/`),
   executado no GitHub Actions ou localmente.
 - Nextflow para orquestrar o pipeline quando ele estiver estável (fase

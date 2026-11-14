@@ -1,0 +1,25 @@
+# Sonda as fontes novas (DEMAS/SINAN, CNES, INMET) a partir do GitHub, que
+# alcança essas URLs, e guarda as respostas reais usadas nos testes.
+# Não toca no banco nem em produção: não usa segredo nenhum.
+name: sondar-fontes
+on:
+  workflow_dispatch:
+    inputs:
+      etapa: { description: "vazio = tudo; campos = só o teste do parâmetro campos", default: "campos" }
+  push:
+    branches: [claude/project-thread-8j8kg6]
+    paths: [scripts/sondar_fontes.py, .github/workflows/sondar-fontes.yml]
+jobs:
+  sondar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements.txt
+      - run: python scripts/sondar_fontes.py ${{ github.event.inputs.etapa || 'campos' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sondagem
+          path: data/interim/sondagem/

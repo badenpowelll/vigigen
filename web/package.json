@@ -7,16 +7,21 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:artefato": "tsc --noEmit && vite build --mode artefato",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node scripts/testar.mjs"
   },
   "dependencies": {
+    "@govbr-ds/core": "3.7.0",
     "@supabase/supabase-js": "2.45.4",
     "d3-array": "3.2.4",
     "d3-geo": "3.1.1",
     "d3-scale": "4.0.2",
     "d3-shape": "3.2.0",
+    "jspdf": "2.5.2",
+    "jspdf-autotable": "3.8.4",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "xlsx": "0.18.5"
   },
   "devDependencies": {
     "@types/d3-array": "3.2.1",

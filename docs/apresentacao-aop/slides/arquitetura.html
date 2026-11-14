@@ -1,0 +1,19 @@
+<section id="arquitetura" style="gap:32px;">
+<p class="eyebrow">ARQUITETURA E METODOLOGIA</p>
+<h2>Do genoma à decisão do gestor, em camadas</h2>
+<div class="fluxo" style="justify-content:space-between; align-items:stretch;">
+<div class="etapa"><p class="t">Fontes</p><p class="d">Públicas: GenBank, InfoDengue, IBGE. Laboratórios: a firmar</p><span class="tag feito">IMPLEMENTADO</span></div>
+<x-shape kind="arrow-right" class="seta" style="align-self:center;"></x-shape>
+<div class="etapa"><p class="t">Pipeline</p><p class="d">Nextclade (em teste); Nextflow, Nextstrain e TreeTime</p><span class="tag teste">EM TESTE</span></div>
+<x-shape kind="arrow-right" class="seta" style="align-self:center;"></x-shape>
+<div class="etapa"><p class="t">Integração</p><p class="d">Indicadores prontos; detecção de mudanças proposta</p><span class="tag teste">PARCIAL</span></div>
+<x-shape kind="arrow-right" class="seta" style="align-self:center;"></x-shape>
+<div class="etapa"><p class="t">Plataforma</p><p class="d">Painel, acesso por perfil e município, auditoria</p><span class="tag feito">IMPLEMENTADO</span></div>
+<x-shape kind="arrow-right" class="seta" style="align-self:center;"></x-shape>
+<div class="etapa destaque"><p class="t">Decisão</p><p class="d">Gestão municipal de saúde</p><span class="tag aval">A AVALIAR</span></div>
+</div>
+<div class="faixa">Transversal a todas as camadas: governança, segurança, rastreabilidade e LGPD</div>
+<div class="laco"><p><b>Avaliação → refinamento do artefato</b>, em ciclos de DSR. Referências, primers e parâmetros de QC são configurados por patógeno.</p></div>
+<div class="rodape"><p>Figura 1 do artigo, revista; Di Tommaso et al. (2017); Aksamentov et al. (2021)</p><p class="num"></p></div>
+<aside>São cinco camadas, da fonte à decisão, e cada uma está marcada com o que existe hoje. As fontes públicas e o núcleo da plataforma estão implementados. A classificação com Nextclade está em teste; o Nextclade entrega métricas e flags de qualidade, não garantias. Nextflow, filogeografia e a detecção de mudanças são propostas do doutorado. A governança, a segurança e a rastreabilidade atravessam todas as camadas, e a avaliação volta para refinar o artefato, que é o ciclo da Design Science. A arquitetura é reaproveitável, mas referências, primers e parâmetros precisam ser configurados para cada vírus. O modelo de linguagem, se usado, só redige alertas a partir de indicadores, com revisão humana. (1 min 10 s)</aside>
+</section>

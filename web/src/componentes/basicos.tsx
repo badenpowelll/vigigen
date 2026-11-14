@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { fmtNum } from "../util";
 
 /* ---------- Marca Hélice-pulso ---------- */
@@ -97,13 +97,15 @@ export interface KpiProps {
   serie?: (number | null)[];
   rodapeExtra?: ReactNode;
   destaque?: boolean;
+  /** o que o número mede e como ler; aparece ao passar o mouse ou focar o "i" */
+  ajuda?: string;
 }
 
 export function KpiCard(p: KpiProps) {
   return (
     <article className="cartao flex min-w-0 flex-col gap-2 p-4" aria-label={p.titulo}>
       <header className="flex items-start justify-between gap-2">
-        <h3 className="rotulo">{p.titulo}</h3>
+        <h3 className="rotulo inline-flex items-center gap-1">{p.titulo}{p.ajuda && <Dica texto={p.ajuda} rotulo={`Sobre: ${p.titulo}`} />}</h3>
         <span className="num shrink-0 rounded-pilula bg-[var(--superficie-2)] px-2 py-0.5 text-[0.7rem] font-semibold text-suave">{p.periodo}</span>
       </header>
       {p.valor === null ? (
@@ -158,11 +160,21 @@ export function Secao({ titulo, subtitulo, acoes, children, id }: { titulo: stri
 
 export function Alternador<T extends string>({ opcoes, valor, aoMudar, rotulo }:
   { opcoes: { v: T; r: string }[]; valor: T; aoMudar: (v: T) => void; rotulo: string }) {
+  // radiogroup com foco itinerante: Tab entra no grupo, setas trocam a opção (padrão ARIA)
+  function teclas(e: React.KeyboardEvent<HTMLButtonElement>, i: number) {
+    const d = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+    const j = e.key === "Home" ? 0 : e.key === "End" ? opcoes.length - 1 : d ? (i + d + opcoes.length) % opcoes.length : -1;
+    if (j < 0) return;
+    e.preventDefault();
+    aoMudar(opcoes[j].v);
+    (e.currentTarget.parentElement?.querySelectorAll("button")[j] as HTMLButtonElement | undefined)?.focus();
+  }
   return (
-    <div role="radiogroup" aria-label={rotulo} className="inline-flex flex-wrap rounded-pilula border border-borda bg-[var(--superficie-2)] p-0.5">
-      {opcoes.map((o) => (
-        <button key={o.v} role="radio" aria-checked={valor === o.v} onClick={() => aoMudar(o.v)}
-          className={`rounded-pilula px-3 py-1 text-sm font-semibold transition-colors ${valor === o.v ? "bg-imd text-white" : "text-suave hover:text-texto"}`}>
+    <div role="radiogroup" aria-label={rotulo} className="inline-flex flex-wrap gap-2">
+      {opcoes.map((o, i) => (
+        <button key={o.v} type="button" role="radio" aria-checked={valor === o.v} tabIndex={valor === o.v ? 0 : -1}
+          onClick={() => aoMudar(o.v)} onKeyDown={(e) => teclas(e, i)}
+          className={`br-button small ${valor === o.v ? "primary" : "secondary"}`}>
           {o.r}
         </button>
       ))}
@@ -170,10 +182,65 @@ export function Alternador<T extends string>({ opcoes, valor, aoMudar, rotulo }:
   );
 }
 
+/* Nota = br-message do gov.br DS (info ou warning), com ícone em SVG próprio
+   no lugar do Font Awesome, para não carregar uma fonte de ícones inteira. */
 export function Nota({ children, tipo = "info" }: { children: ReactNode; tipo?: "info" | "aviso" }) {
+  const aviso = tipo === "aviso";
   return (
-    <div className={`rounded-xl border px-3 py-2 text-sm ${tipo === "aviso" ? "border-[var(--estado-2)] bg-[color-mix(in_srgb,var(--estado-2)_10%,transparent)]" : "border-borda bg-[var(--superficie-2)]"}`}>
-      {children}
+    <div className={`br-message ${aviso ? "warning" : "info"} nota`}>
+      <div className="icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24">
+          {aviso
+            ? <><path d="M12 2.5 22.5 21h-21Z" fill="currentColor" /><path d="M12 9v5.5M12 17.2v.3" stroke="var(--warning-alternative)" strokeWidth="2.4" strokeLinecap="round" /></>
+            : <><circle cx="12" cy="12" r="10" fill="currentColor" /><path d="M12 11v6M12 7.2v.3" stroke="var(--info-alternative)" strokeWidth="2.4" strokeLinecap="round" /></>}
+        </svg>
+      </div>
+      <div className="content" role={aviso ? "alert" : undefined}>
+        <span className="message-title">{aviso ? "Atenção. " : "Informação. "}</span>
+        <span className="message-body">{children}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Dica: informação ao passar o mouse, focar pelo teclado ou tocar ---------- */
+export function Dica({ texto, rotulo = "Mais informações" }: { texto: ReactNode; rotulo?: string }) {
+  const [aberta, setAberta] = useState(false);
+  const id = useId();
+  const caixa = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!aberta) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setAberta(false); };
+    const fora = (e: PointerEvent) => { if (!caixa.current?.contains(e.target as Node)) setAberta(false); };
+    addEventListener("keydown", esc); addEventListener("pointerdown", fora);
+    return () => { removeEventListener("keydown", esc); removeEventListener("pointerdown", fora); };
+  }, [aberta]);
+  return (
+    <span ref={caixa} className="dica relative inline-flex normal-case"
+      onMouseEnter={() => setAberta(true)} onMouseLeave={() => setAberta(false)}>
+      <button type="button" className="dica-botao" aria-label={rotulo} aria-describedby={aberta ? id : undefined}
+        aria-expanded={aberta} onClick={() => setAberta((x) => !x)} onFocus={() => setAberta(true)} onBlur={() => setAberta(false)}>
+        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 11v6M12 7.2v.3" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" /></svg>
+      </button>
+      {aberta && <span role="tooltip" id={id} className="dica-caixa">{texto}</span>}
+    </span>
+  );
+}
+
+/* ---------- Barra de meta (ex.: SLA 95%) ---------- */
+export function BarraMeta({ valor, meta, rotulo }: { valor: number | null; meta: number; rotulo: string }) {
+  const atende = valor !== null && valor >= meta;
+  const txt = valor === null ? "sem medição" : `${fmtNum(valor, 1)}% (meta ${meta}%)`;
+  return (
+    <div className="flex min-w-0 items-center gap-2" title={`${rotulo}: ${txt}`}>
+      <div className="relative h-3 min-w-[6rem] flex-1 overflow-hidden rounded-pilula bg-[var(--superficie-2)]" role="meter"
+        aria-valuemin={0} aria-valuemax={100} aria-valuenow={valor ?? undefined} aria-valuetext={txt} aria-label={rotulo}>
+        {valor !== null && <div className="h-full rounded-pilula" style={{ width: `${Math.min(100, valor)}%`, background: atende ? "var(--estado-1)" : "var(--estado-4)" }} />}
+        <div className="absolute inset-y-0 w-0.5 bg-[var(--texto)]" style={{ left: `${meta}%` }} aria-hidden="true" />
+      </div>
+      <span className="num w-[7.5rem] shrink-0 text-right text-xs font-semibold" style={{ color: valor === null ? "var(--texto-suave)" : atende ? "var(--estado-1-texto)" : "var(--estado-4-texto)" }}>
+        {valor === null ? "sem medição" : `${atende ? "✓" : "✗"} ${fmtNum(valor, 1)}%`}
+      </span>
     </div>
   );
 }

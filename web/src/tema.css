@@ -1,4 +1,4 @@
-/* VigiGen — tema único.
+/* VigiGen — tema único, no Padrão Digital de Governo (gov.br DS 3.7.0).
    Layout: cabeçalho institucional em azul IMD; grade de 6 KPIs, depois mapa
    e série; alertas na lateral; uma coluna no celular, KPIs primeiro.
    Três paletas com funções que nunca se misturam:
@@ -11,76 +11,81 @@
 @tailwind utilities;
 
 :root {
-  /* institucional (design system do IMD/UFRN) */
-  --imd: #255897;
-  --imd-forte: #1b4377;
+  /* Padrão Digital de Governo (gov.br Design System 3.7.0, conferido com @govbr-ds/core). Os nomes das
+     variáveis ficaram os mesmos (--imd etc.) para não mexer nos componentes;
+     os valores agora são os tokens do gov.br, citados ao lado. */
+  --imd: #1351b4;          /* blue-warm-vivid-70: cor primária */
+  --imd-forte: #0c326f;    /* blue-warm-vivid-80 */
   --imd-texto-sobre: #ffffff;
-  --destaque: #008bda;
+  --destaque: #1351b4;     /* interativo: links e foco */
 
-  /* neutros com leve viés azul */
-  --fundo: #f3f5f8;
-  --superficie: #ffffff;
-  --superficie-2: #eef2f7;
-  --borda: #d9e0e8;
-  --texto: #2b2f36;
-  --texto-suave: #5d6573;
+  /* neutros */
+  --fundo: #f8f8f8;        /* gray-2 */
+  --superficie: #ffffff;   /* pure-0 */
+  --superficie-2: #f0f0f0; /* gray-5 */
+  --borda: #cccccc;        /* gray-20 */
+  --texto: #333333;        /* gray-80 */
+  --texto-suave: #636363;  /* gray-60 */
 
-  /* ESTADO: InfoDengue níveis 1-4 (cor + ícone + rótulo, nunca só a cor) */
-  --estado-1: #0ca30c;
-  --estado-2: #fab219;
+  /* ESTADO: InfoDengue níveis 1-4 (cor + ícone + rótulo, nunca só a cor).
+     Feedback do gov.br: sucesso green-cool-vivid-50, alerta yellow-vivid-20,
+     perigo red-vivid-50; o nível 3 (laranja) não tem par no padrão. */
+  --estado-1: #168821;
+  --estado-2: #ffcd07;
   --estado-3: #ec835a;
-  --estado-4: #d03b3b;
-  --estado-1-texto: #0a6e0a;
+  --estado-4: #e52207;
+  --estado-1-texto: #168821;
   --estado-2-texto: #8a5a00;
   --estado-3-texto: #a3461f;
-  --estado-4-texto: #a52626;
-  --estado-nulo: #8b94a3;
+  --estado-4-texto: #b51a00;
+  --estado-nulo: #888888;  /* gray-40 */
 
   /* IDENTIDADE: ordem fixa, nunca reciclada */
-  --id-1: #2a78d6;
+  --id-1: #2670e8;
   --id-2: #eb6834;
   --id-3: #1baf7a;
   --id-4: #eda100;
   --id-5: #e87ba4;
-  --id-6: #008300;
+  --id-6: #168821;
   --id-7: #6250d6;
   --id-8: #e34948;
 
-  /* MAGNITUDE: rampa de uma matiz */
-  --mag-1: #cde2fb;
-  --mag-2: #86b6ef;
-  --mag-3: #3987e5;
-  --mag-4: #2a78d6;
-  --mag-5: #1c5cab;
-  --mag-6: #0d366b;
-  --mag-nulo: #e6e9ee;
+  /* MAGNITUDE: escala blue-warm-vivid 10 -> 80 */
+  --mag-1: #d4e5ff;
+  --mag-2: #adcdff;
+  --mag-3: #5992ed;
+  --mag-4: #2670e8;
+  --mag-5: #1351b4;
+  --mag-6: #0c326f;
+  --mag-nulo: #e6e6e6;     /* gray-10 */
   --mag-traco: #ffffff;
 
-  --sombra: 0 1px 2px rgb(20 40 70 / 0.06), 0 2px 8px rgb(20 40 70 / 0.05);
+  --raio: var(--surface-rounder-md); /* 8px */
+  --sombra: var(--surface-shadow-sm);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --imd: #1f4c84;
-    --imd-forte: #163a66;
-    --destaque: #4fb3ee;
-    --fundo: #0f1620;
-    --superficie: #17212d;
-    --superficie-2: #1d2937;
-    --borda: #2c3a4b;
-    --texto: #e6ebf2;
-    --texto-suave: #a3afbf;
-    --estado-1: #3cc23c;
-    --estado-2: #fbc14a;
+    --imd: #071d41;
+    --imd-forte: #071d41;
+    --destaque: #81aefc;
+    --fundo: #071d41;
+    --superficie: #0c326f;
+    --superficie-2: #0a2858;
+    --borda: #1351b4;
+    --texto: #f8f8f8;
+    --texto-suave: #c5d4eb;
+    --estado-1: #36b44a;
+    --estado-2: #ffcd07;
     --estado-3: #f19a77;
-    --estado-4: #e86464;
+    --estado-4: #ff6b5a;
     --estado-1-texto: #7be07b;
     --estado-2-texto: #ffd27a;
     --estado-3-texto: #ffb596;
     --estado-4-texto: #ff9a9a;
-    --estado-nulo: #7d8797;
-    --id-1: #5b9be6;
+    --estado-nulo: #888888;
+    --id-1: #81aefc;
     --id-2: #f08a5f;
     --id-3: #3ccb95;
     --id-4: #f5b833;
@@ -89,38 +94,50 @@
     --id-7: #8b7ce6;
     --id-8: #ef7171;
     /* rampa re-escalonada: escuro (pouco) -> claro (muito) sobre fundo escuro */
-    --mag-1: #1d3350;
-    --mag-2: #1f4d85;
-    --mag-3: #2a6bc0;
-    --mag-4: #4a8fe0;
-    --mag-5: #86b6ef;
-    --mag-6: #cde2fb;
-    --mag-nulo: #263241;
-    --mag-traco: #0f1620;
-    --sombra: 0 1px 2px rgb(0 0 0 / 0.3);
+    --mag-1: #0c326f;
+    --mag-2: #1351b4;
+    --mag-3: #2670e8;
+    --mag-4: #5992ed;
+    --mag-5: #adcdff;
+    --mag-6: #edf5ff;
+    --mag-nulo: #0a2858;
+    --mag-traco: #071d41;
+    --sombra: 0 1px 6px rgba(0, 0, 0, 0.4);
+    /* componentes gov.br no modo escuro (equivalente à classe dark-mode do DS) */
+    --background: var(--background-dark);
+    --color: var(--color-dark);
+    --color-rgb: var(--color-dark-rgb);
+    --text-color: var(--color-dark);
+    --interactive: var(--interactive-dark);
+    --interactive-rgb: var(--interactive-dark-rgb);
+    --hover: var(--hover-dark);
+    --pressed: var(--pressed-dark);
+    --focus-color: var(--focus-color-dark);
+    --focus: var(--focus-color-dark);
+    --border-color-alternative: var(--blue-warm-vivid-30);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --imd: #1f4c84;
-  --imd-forte: #163a66;
-  --destaque: #4fb3ee;
-  --fundo: #0f1620;
-  --superficie: #17212d;
-  --superficie-2: #1d2937;
-  --borda: #2c3a4b;
-  --texto: #e6ebf2;
-  --texto-suave: #a3afbf;
-  --estado-1: #3cc23c;
-  --estado-2: #fbc14a;
+  --imd: #071d41;
+  --imd-forte: #071d41;
+  --destaque: #81aefc;
+  --fundo: #071d41;
+  --superficie: #0c326f;
+  --superficie-2: #0a2858;
+  --borda: #1351b4;
+  --texto: #f8f8f8;
+  --texto-suave: #c5d4eb;
+  --estado-1: #36b44a;
+  --estado-2: #ffcd07;
   --estado-3: #f19a77;
-  --estado-4: #e86464;
+  --estado-4: #ff6b5a;
   --estado-1-texto: #7be07b;
   --estado-2-texto: #ffd27a;
   --estado-3-texto: #ffb596;
   --estado-4-texto: #ff9a9a;
-  --estado-nulo: #7d8797;
-  --id-1: #5b9be6;
+  --estado-nulo: #888888;
+  --id-1: #81aefc;
   --id-2: #f08a5f;
   --id-3: #3ccb95;
   --id-4: #f5b833;
@@ -128,30 +145,45 @@
   --id-6: #39a839;
   --id-7: #8b7ce6;
   --id-8: #ef7171;
-  --mag-1: #1d3350;
-  --mag-2: #1f4d85;
-  --mag-3: #2a6bc0;
-  --mag-4: #4a8fe0;
-  --mag-5: #86b6ef;
-  --mag-6: #cde2fb;
-  --mag-nulo: #263241;
-  --mag-traco: #0f1620;
-  --sombra: 0 1px 2px rgb(0 0 0 / 0.3);
+  /* rampa re-escalonada: escuro (pouco) -> claro (muito) sobre fundo escuro */
+  --mag-1: #0c326f;
+  --mag-2: #1351b4;
+  --mag-3: #2670e8;
+  --mag-4: #5992ed;
+  --mag-5: #adcdff;
+  --mag-6: #edf5ff;
+  --mag-nulo: #0a2858;
+  --mag-traco: #071d41;
+  --sombra: 0 1px 6px rgba(0, 0, 0, 0.4);
+  /* componentes gov.br no modo escuro (equivalente à classe dark-mode do DS) */
+  --background: var(--background-dark);
+  --color: var(--color-dark);
+  --color-rgb: var(--color-dark-rgb);
+  --text-color: var(--color-dark);
+  --interactive: var(--interactive-dark);
+  --interactive-rgb: var(--interactive-dark-rgb);
+  --hover: var(--hover-dark);
+  --pressed: var(--pressed-dark);
+  --focus-color: var(--focus-color-dark);
+  --focus: var(--focus-color-dark);
+  --border-color-alternative: var(--blue-warm-vivid-30);
   color-scheme: dark;
 }
 
 html, body { background: var(--fundo); color: var(--texto); }
 body {
-  font-family: Hind, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 15px;
+  font-family: Rawline, Raleway, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px;
   line-height: 1.5;
+  /* Raleway (substituta da Rawline) usa algarismos antigos por padrão */
+  font-variant-numeric: lining-nums;
 }
 body::before {
   content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
   z-index: 10; background: var(--imd);
 }
 h1, h2, h3 { text-wrap: balance; }
-.num { font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: lining-nums tabular-nums; }
 .gutter {
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -159,15 +191,138 @@ h1, h2, h3 { text-wrap: balance; }
 .cartao {
   background: var(--superficie);
   border: 1px solid var(--borda);
-  border-radius: 14px;
+  border-radius: var(--raio);
   box-shadow: var(--sombra);
 }
 .rotulo {
   font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--texto-suave); font-weight: 600;
 }
-:focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: var(--focus-width) var(--focus-style) var(--focus); outline-offset: var(--focus-offset); }
+a { color: var(--interactive); }
+
+/* br-button primário no escuro: o DS usa a variante inverted */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .br-button.primary { --interactive-rgb: var(--background-dark-rgb); background-color: var(--interactive-dark); color: var(--background-dark); }
+  :root:not([data-theme="light"]) .br-button.secondary { background-color: var(--background-dark); }
+}
+:root[data-theme="dark"] .br-button.primary { --interactive-rgb: var(--background-dark-rgb); background-color: var(--interactive-dark); color: var(--background-dark); }
+:root[data-theme="dark"] .br-button.secondary { background-color: var(--background-dark); }
+
+/* Campo de seleção no padrão do br-input (o br-select do DS depende de JS) */
+.br-campo {
+  height: 40px; padding: 0 var(--spacing-scale-5x) 0 var(--spacing-scale-2x);
+  border: var(--border-width) var(--border-style) var(--border-color-alternative);
+  border-radius: var(--surface-rounder-sm);
+  background-color: var(--superficie); color: var(--texto);
+  font-size: var(--font-size-scale-up-01); font-weight: var(--font-weight-medium);
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--interactive) 50%), linear-gradient(135deg, var(--interactive) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 17px, calc(100% - 16px) 17px;
+  background-size: 6px 6px; background-repeat: no-repeat;
+}
+.br-campo:hover { background-color: var(--superficie-2); }
+.br-rotulo { font-size: var(--font-size-scale-base); font-weight: var(--font-weight-semi-bold); color: var(--texto); }
+
+/* Rodapé no padrão br-footer: fundo blue-warm-vivid-90, texto claro */
+.br-rodape { background: var(--blue-warm-vivid-90); color: var(--pure-0); }
+.br-rodape a { color: var(--blue-warm-20); }
 .hachura { fill: url(#hachura-sem-dado); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* br-message dentro do painel: sem a margem inferior padrão, texto no tamanho do painel */
+.br-message.nota { margin-bottom: 0; border-radius: var(--surface-rounder-sm); }
+.br-message.nota .content { font-size: var(--font-size-scale-base); padding-top: var(--spacing-scale-2x); padding-bottom: var(--spacing-scale-2x); }
+.br-message.nota .icon { margin-top: var(--spacing-scale-2x); margin-bottom: auto; align-self: flex-start; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .br-message.info { --message-background: var(--blue-warm-vivid-80); --message-text: var(--pure-0); --message-color-icon: var(--blue-warm-vivid-30); }
+  :root:not([data-theme="light"]) .br-message.warning { --message-background: #3a3000; --message-text: var(--pure-0); --message-color-icon: var(--yellow-vivid-20); }
+}
+:root[data-theme="dark"] .br-message.info { --message-background: var(--blue-warm-vivid-80); --message-text: var(--pure-0); --message-color-icon: var(--blue-warm-vivid-30); }
+:root[data-theme="dark"] .br-message.warning { --message-background: #3a3000; --message-text: var(--pure-0); --message-color-icon: var(--yellow-vivid-20); }
+
+/* Relatórios: tabela da prévia e impressão só do relatório escolhido */
+.tabela-relatorio { border-collapse: collapse; }
+.tabela-relatorio th { padding: 6px 10px; border-bottom: 2px solid var(--borda); font-weight: 600; white-space: nowrap; }
+.tabela-relatorio td { padding: 5px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+.so-impressao { display: none; }
+@media print {
+  body.imprimindo-relatorio * { visibility: hidden; }
+  body.imprimindo-relatorio #area-impressao, body.imprimindo-relatorio #area-impressao * { visibility: visible; }
+  body.imprimindo-relatorio #area-impressao { position: absolute; left: 0; top: 0; width: 100%; }
+  body.imprimindo-relatorio .sem-impressao { display: none !important; }
+  body.imprimindo-relatorio .so-impressao { display: table-row; }
+  body.imprimindo-relatorio .overflow-x-auto { overflow: visible; }
+  body.imprimindo-relatorio #area-impressao .cartao { box-shadow: none; border: 0; }
+  body.imprimindo-relatorio .tabela-relatorio { font-size: 9pt; }
+}
+
+/* ---------- Dica (tooltip acessível) ---------- */
+.dica-botao {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 999px; color: var(--texto-suave);
+  background: transparent; border: 0; cursor: help;
+}
+.dica-botao:hover, .dica-botao[aria-expanded="true"] { color: var(--interactive); background: var(--superficie-2); }
+.dica-botao:focus-visible { outline: 3px solid var(--focus, #c2850c); outline-offset: 2px; }
+.dica-caixa {
+  position: absolute; z-index: 30; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: min(18rem, calc(100vw - 2rem));
+  padding: .5rem .75rem; border-radius: var(--surface-rounder-sm, 6px);
+  background: var(--texto); color: var(--superficie);
+  font-size: .8rem; font-weight: 400; line-height: 1.35; text-transform: none; letter-spacing: 0;
+  box-shadow: var(--surface-shadow-md);
+}
+/* Tooltip flutuante dos gráficos */
+.grafico-dica {
+  position: absolute; z-index: 20; pointer-events: none;
+  padding: .4rem .6rem; border-radius: var(--surface-rounder-sm, 6px);
+  background: var(--superficie); color: var(--texto); border: 1px solid var(--borda);
+  font-size: .78rem; line-height: 1.35; box-shadow: var(--surface-shadow-md); white-space: nowrap;
+}
+.grafico-foco:focus-visible { outline: 3px solid var(--focus, #c2850c); outline-offset: 2px; }
+/* Foco visível em tudo que é clicável no mapa */
+path[role="button"]:focus-visible { stroke: var(--focus, #c2850c); stroke-width: 3; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* ---------- Acessibilidade: pular conteúdo, tema, atalhos ---------- */
+.pular {
+  position: absolute; left: 8px; top: -60px; z-index: 50;
+  padding: .5rem 1rem; border-radius: var(--surface-rounder-sm, 6px);
+  background: var(--interactive); color: var(--pure-0, #fff); font-weight: 600;
+}
+.pular:focus { top: 8px; }
+.tema-grupo { display: inline-flex; border: 1px solid var(--borda); border-radius: 999px; padding: 2px; background: var(--superficie); }
+.tema-botao { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; color: var(--texto-suave); background: transparent; border: 0; cursor: pointer; }
+.tema-botao:hover { background: var(--superficie-2); color: var(--texto); }
+.tema-botao[aria-checked="true"] { background: var(--interactive); color: var(--pure-0, #fff); }
+:root[data-theme="dark"] .tema-botao[aria-checked="true"] { background: var(--interactive-dark, #c5d4eb); color: var(--background-dark, #071d41); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tema-botao[aria-checked="true"] { background: var(--interactive-dark, #c5d4eb); color: var(--background-dark, #071d41); } }
+.atalhos-dialogo { max-width: min(36rem, calc(100vw - 2rem)); padding: 1.25rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--superficie); color: var(--texto); }
+.atalhos-dialogo::backdrop { background: rgba(0, 0, 0, .5); }
+kbd { font-family: var(--font-family-mono, monospace); font-size: .8em; padding: 1px 6px; border: 1px solid var(--borda); border-bottom-width: 2px; border-radius: 4px; background: var(--superficie-2); white-space: nowrap; }
+main:focus { outline: none; }
+.pular-mapa { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pular-mapa:focus { position: static; width: auto; height: auto; clip: auto; margin-bottom: .5rem; padding: .25rem .75rem; border-radius: 6px; background: var(--interactive); color: var(--pure-0, #fff); font-weight: 600; white-space: normal; }
+
+/* formulários (login e administração) */
+.entrada {
+  border: 1px solid var(--borda); background: var(--superficie); color: var(--texto);
+  border-radius: 10px; padding: 0.45rem 0.75rem; font-size: 0.95rem; min-width: 0;
+}
+.botao-primario {
+  background: var(--imd); color: #fff; border-radius: 30px; padding: 0.5rem 1.1rem; font-weight: 600;
+}
+.botao-primario:hover { background: var(--imd-forte); }
+.botao-primario:disabled { opacity: 0.6; }
+.botao {
+  border: 1px solid var(--borda); border-radius: 30px; padding: 0.3rem 0.85rem; font-size: 0.85rem; font-weight: 600;
+  background: var(--superficie);
+}
+.botao:hover { background: var(--superficie-2); }
+.tabela { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.tabela th { text-align: left; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--texto-suave);
+  font-weight: 600; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borda); white-space: nowrap; }
+.tabela td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borda); vertical-align: top; }

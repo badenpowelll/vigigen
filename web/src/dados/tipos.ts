@@ -37,21 +37,44 @@ export interface SequenciaRN {
 }
 
 export interface Alerta {
-  id: string; g: number | null; tipo: string; p: string;
+  id: string; g: number | null; a?: Doenca; tipo: string; p: string;
   status: "novo" | "em_analise" | "confirmado" | "descartado";
   ev: Record<string, unknown>; criado: string; rev: string | null;
 }
 
-export interface Fonte { status: string; finalizado_em: string; iniciado_em: string; registros: number; rota?: string | null }
+export interface Fonte { id?: number | string; status: string; finalizado_em: string; iniciado_em: string; registros: number; rota?: string | null }
+
+export interface GenbankResumo {
+  total: number; rn: number; rn_por_nome_cepa: number; brasil_sem_estado: number;
+  sem_geo: number; genoma_quase_completo: number; por_sorotipo: Record<string, number>; termo: string;
+}
+
+/** Bloco genômico de um agravo (painel_genomica, migração 013). */
+export interface Genomica {
+  agravo: Doenca;
+  config?: { termo: string; referencia: string; tamanho_referencia: number; limiar: number; criterio_limiar: string; classificacao: string } | null;
+  fonte?: { id?: number | string; status: string; iniciado_em: string; finalizado_em: string; registros: number } | null;
+  genbank: GenbankResumo;
+  sequencias_rn: SequenciaRN[];
+  composicao_brasil: { a: number; s: string; n: number }[];
+  por_ano_brasil: { a: number; n: number; rn: number }[];
+  indicadores: Indicador[];
+  cobertura_municipal_trimestre: { g: number; p: string; v: number | null; num: number; den: number | null; mot: string | null }[];
+  classificacao?: { total: number };
+}
+
+export interface SlaFonte {
+  fonte: string; rotulo: string; agenda: string; meta_horas: number; ultima_ok: string | null;
+  idade_horas: number | null; dentro: boolean; cumprimento_30d: number | null; horas_medidas_30d: number; atende: boolean;
+}
+export interface Sla { meta_cumprimento: number; janela_dias: number; calculado_em: string; fontes: SlaFonte[] | null }
 
 export interface Resumo {
   gerado_em: string;
   fontes: Record<string, Fonte> | null;
   em_andamento: string[];
-  genbank: {
-    total: number; rn: number; rn_por_nome_cepa: number; brasil_sem_estado: number;
-    sem_geo: number; genoma_quase_completo: number; por_sorotipo: Record<string, number>; termo: string;
-  };
+  /** chaves antigas: só dengue */
+  genbank: GenbankResumo;
   sequencias_rn: SequenciaRN[];
   composicao_brasil: { a: number; s: string; n: number }[];
   por_ano_brasil: { a: number; n: number; rn: number }[];
@@ -60,6 +83,13 @@ export interface Resumo {
   alertas: Alerta[];
   classificacao: { total: number };
   exclusoes_qc: Record<string, number>;
+  /** última execução registrada da detecção R1/R2/R3 (auditoria); ausente se nunca rodou
+   *  ou se o perfil do leitor não vê a auditoria */
+  deteccao?: { em: string; resumo: Record<string, unknown> } | null;
+  /** SLA de atualização (painel_sla, migração 016); ausente antes dela */
+  sla?: Sla | null;
+  /** um bloco por agravo; ausente em retratos anteriores à migração 013 */
+  genomica?: Partial<Record<Doenca, Genomica>>;
 }
 
 export interface Retrato {

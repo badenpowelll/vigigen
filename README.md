@@ -4,7 +4,7 @@ Vigilância genômica integrada para a gestão municipal de saúde. Junta casos
 semanais de arboviroses (InfoDengue), sequências públicas de vírus dengue
 (GenBank) e o território (IBGE) em indicadores e alertas para secretarias
 municipais do Rio Grande do Norte. Artefato da tese de doutorado em
-Bioinformática de Baden (UFERSA), construído com Design Science Research.
+Bioinformática de Baden (UFRN/IMD), construído com Design Science Research.
 
 Os dados não são instantâneos: são atualizados automaticamente, com a origem e
 a data de cada número visíveis.
@@ -18,7 +18,12 @@ a data de cada número visíveis.
   sequenciamento por município e estado, oportunidade por sorotipo e ano,
   qualidade dos metadados.
 - **Painel** (`web/`): visão geral, mapa de calor, séries, alertas, qualidade do
-  dado, perfil do município e fontes.
+  dado, perfil do município e fontes. Publicado com login em
+  https://badenpowelll.github.io/vigigen/ (workflow `pages`).
+- **Administração** (só administradores): auditoria de uso do site (login,
+  cliques, navegação, erros, com data e hora, IP, país e navegador), SLA de
+  atualização dos dados, alertas do sistema e gestão de usuários, perfis e
+  convites (`011_administracao.sql`, Edge Function `acesso`, D-014 a D-016).
 
 ## Como verificar
 ```sql
@@ -32,7 +37,7 @@ Isolamento por território: rode `tests/test_rls.sql` (desfaz tudo ao fim) e vej
 ## Estrutura
 ```
 src/db/migrations/   esquema, RLS, ingestão SQL, agenda, indicadores, painel
-supabase/functions/  ingest-ibge, ingest-infodengue, ingest-genbank
+supabase/functions/  ingest-ibge, ingest-infodengue, ingest-genbank, acesso (primeiro acesso)
 src/ingest/          CLI Python com os mesmos endpoints (reprodução local)
 src/pipeline/        Nextclade (classify.py) e controle de qualidade (qc.py)
 src/indicators/      regras de detecção R1, R2, R3 (deteccao.py)
@@ -46,6 +51,9 @@ docs/                fontes, decisões, relatório de carga, marca
 ```bash
 pip install -r requirements.txt
 python -m src.ingest --fonte ibge|infodengue|genbank   # local, grava em data/raw/
+python -m src.ingest --fonte sinan --ano 2026 --agravo todos   # SINAN só em contagens (D-020)
+python -m src.ingest --fonte cnes                            # estabelecimentos do RN (D-020)
+python -m src.ingest --fonte inmet --ano 2026 [--banco]      # estações do INMET no RN (D-021)
 python -m pytest -q
 cd web && npm ci && npm run build            # painel web (precisa de web/.env)
 cd web && npm run build:artefato && node scripts/fragmento-artefato.mjs   # painel claude.ai

@@ -1,0 +1,32 @@
+# Testes a cada push e PR: pytest (com migrações num Postgres descartável),
+# checagem de tipos das Edge Functions e comparação Python × Deno da
+# agregação do SINAN. Não usa segredo nem toca no banco de produção.
+name: testes
+on:
+  push:
+  pull_request:
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_PASSWORD: teste }
+        ports: ["5432:5432"]
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      VIGIGEN_PG_TESTE: postgresql://postgres:teste@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - uses: denoland/setup-deno@v2
+        with: { deno-version: v2.1.4 }
+      - run: pip install -r requirements.txt
+      - name: psql
+        run: which psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+      - name: Tipos das Edge Functions
+        run: deno check supabase/functions/*/index.ts
+      - name: pytest
+        run: python -m pytest -q -rs

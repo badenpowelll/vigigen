@@ -1,6 +1,10 @@
-"""NCBI GenBank — sequências de dengue via E-utilities (esearch + efetch).
+"""NCBI GenBank — sequências de dengue, chikungunya e Zika via E-utilities
+(esearch + efetch), um termo por agravo (D-018). Validados em 14/11/2026:
 
-Termo do projeto: "Dengue virus"[Organism] AND Brazil[All Fields]
+  dengue       "Dengue virus"[Organism] AND Brazil[All Fields]       7.203
+  chikungunya  "Chikungunya virus"[Organism] AND Brazil[All Fields]  1.839
+  zika         "Zika virus"[Organism] AND Brazil[All Fields]         519
+
 O país migrou de /country para /geo_loc_name: os dois são lidos.
 Limite: 3 req/s sem chave; 10 req/s com NCBI_API_KEY. tool=vigigen e
 email=NCBI_EMAIL (variáveis de ambiente) são enviados quando definidos.
@@ -22,7 +26,22 @@ import pandas as pd
 from .comum import PROCESSED, RAW, buscar
 
 EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-TERMO = '"Dengue virus"[Organism] AND Brazil[All Fields]'
+TERMOS = {
+    "dengue": '"Dengue virus"[Organism] AND Brazil[All Fields]',
+    "chikungunya": '"Chikungunya virus"[Organism] AND Brazil[All Fields]',
+    "zika": '"Zika virus"[Organism] AND Brazil[All Fields]',
+}
+TERMO = TERMOS["dengue"]
+
+
+def agravo_de(organismo: str | None) -> str | None:
+    """Mesma regra de app.agravo_de (migração 013): só o organismo declarado."""
+    o = (organismo or "").strip().lower()
+    for prefixo, agravo in (("dengue virus", "dengue"), ("chikungunya virus", "chikungunya"),
+                            ("zika virus", "zika")):
+        if o.startswith(prefixo):
+            return agravo
+    return None
 LOTE = 100
 
 _SOROTIPO = re.compile(r"(?:dengue virus|denv)[ -]*(?:type[ -]*)?([1-4])\b", re.I)
@@ -57,13 +76,14 @@ def _quals(gbseq: ET.Element) -> dict:
     return {}
 
 
-def executar(termo: str = TERMO) -> dict:
+def executar(agravo: str = "dengue") -> dict:
+    termo = TERMOS[agravo]
     intervalo = 0.12 if os.getenv("NCBI_API_KEY") else 0.4
     ids, retstart, count = [], 0, None
     while count is None or retstart < count:
         r = buscar("genbank", f"{EUTILS}/esearch.fcgi",
                    {"db": "nuccore", "retmode": "json", "retmax": 10000, "retstart": retstart,
-                    "term": termo, **_comuns()}, nome=f"esearch_{retstart}")
+                    "term": termo, **_comuns()}, nome=f"esearch_{agravo}_{retstart}")
         res = json.loads(r.corpo)["esearchresult"]
         count = int(res["count"])
         ids += res["idlist"]
@@ -79,7 +99,7 @@ def executar(termo: str = TERMO) -> dict:
         r = buscar("genbank", f"{EUTILS}/efetch.fcgi", metodo="POST",
                    data={"db": "nuccore", "rettype": "gb", "retmode": "xml",
                          "id": ",".join(lote), **_comuns()},
-                   nome=f"efetch_{i:06d}", extensao="xml")
+                   nome=f"efetch_{agravo}_{i:06d}", extensao="xml")
         for s in ET.fromstring(r.corpo).iterfind("GBSeq"):
             q = _quals(s)
             acc = s.findtext("GBSeq_primary-accession")
@@ -88,8 +108,11 @@ def executar(termo: str = TERMO) -> dict:
             linhas.append({
                 "accession": acc,
                 "organismo": s.findtext("GBSeq_organism"),
-                "sorotipo_declarado": sorotipo(q.get("serotype"), s.findtext("GBSeq_organism"),
-                                               s.findtext("GBSeq_definition")),
+                "agravo": agravo_de(s.findtext("GBSeq_organism")),
+                # sorotipo DENV-1..4 só existe para dengue
+                "sorotipo_declarado": (sorotipo(q.get("serotype"), s.findtext("GBSeq_organism"),
+                                                s.findtext("GBSeq_definition"))
+                                       if agravo_de(s.findtext("GBSeq_organism")) == "dengue" else None),
                 "data_coleta": q.get("collection_date"),
                 "data_publicacao": s.findtext("GBSeq_create-date"),
                 "geo_loc_name": geo,
@@ -104,11 +127,12 @@ def executar(termo: str = TERMO) -> dict:
 
     df = pd.DataFrame(linhas)
     PROCESSED.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(PROCESSED / "sequencias_metadados.parquet", index=False)
-    (RAW / "genbank" / f"sequencias_{acesso}.fasta").write_text("".join(fasta))
+    sufixo = "" if agravo == "dengue" else f"_{agravo}"
+    df.to_parquet(PROCESSED / f"sequencias_metadados{sufixo}.parquet", index=False)
+    (RAW / "genbank" / f"sequencias{sufixo}_{acesso}.fasta").write_text("".join(fasta))
     ano = pd.to_datetime(df["data_coleta"], errors="coerce", format="mixed").dt.year
     return {
-        "fonte": "NCBI GenBank", "endpoint": f"{EUTILS}/esearch+efetch", "termo": termo,
+        "fonte": f"NCBI GenBank ({agravo})", "agravo": agravo, "endpoint": f"{EUTILS}/esearch+efetch", "termo": termo,
         "acesso": acesso, "registros": len(df),
         "rn": int(df["rn"].sum()),
         "brasil_sem_estado": int(df["geo_loc_name"].fillna("").str.fullmatch(r"\s*Brazil\s*").sum()),
