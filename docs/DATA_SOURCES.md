@@ -25,6 +25,6 @@ Município e UF são inferidos do texto de `geo_loc_name`; nada é completado à
 
 ## Agendamento (pg_cron)
 - InfoDengue: segunda e quinta 09:00 UTC (ano corrente)
-- GenBank: terça 10:00 UTC (registros modificados desde a última carga)
+- GenBank: todo dia 10:00 UTC (registros modificados desde a última carga; era terça até 14/11/2026, migração 012)
 - IBGE: dia 1 de cada mês, 08:00 UTC
 - Indicadores: a cada 6 h
