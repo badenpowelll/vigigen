@@ -29,7 +29,7 @@ export function classe(v: number, limites: number[]) {
   return k;
 }
 
-const K_MIN = 1, K_MAX = 12, K_ROTULOS = 2.5;
+const K_MIN = 1, K_MAX = 12, K_ROTULOS = 2;
 interface Vista { k: number; x: number; y: number }
 const VISTA0: Vista = { k: 1, x: 0, y: 0 };
 
