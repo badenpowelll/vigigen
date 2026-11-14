@@ -19,6 +19,7 @@ export function useSessao() {
   const [situacao, setSituacao] = useState<Situacao>(supabase ? "carregando" : "ok");
   const [perfilDe, setPerfilDe] = useState<string | null>(null);   // de qual usuário é a situação lida
   const [tentativa, setTentativa] = useState(0);
+  const [desativada, setDesativada] = useState(false);   // sessão encerrada por conta desativada
 
   useEffect(() => {
     if (!supabase) return;
@@ -35,7 +36,7 @@ export function useSessao() {
       if (!vivo) return;
       const p = error ? null : ((data as Perfil | null) ?? null);
       const s = situacaoDoPerfil(p, !!error);
-      if (s === "desativado") void supabase?.auth.signOut();   // encerra a sessão que ainda estiver aberta
+      if (s === "desativado") { setDesativada(true); void supabase?.auth.signOut(); }   // encerra a sessão aberta
       setPerfil(s === "ok" ? p : null);
       setSituacao(s);
       setPerfilDe(uid);
@@ -49,14 +50,14 @@ export function useSessao() {
   let atual: Situacao;
   if (!supabase) atual = "ok";
   else if (!lida) atual = "carregando";
-  else if (!sessao) atual = "sem_sessao";
+  else if (!sessao) atual = desativada ? "desativado" : "sem_sessao";   // mostra o motivo, não só o login
   else if (perfilDe !== sessao.user.id) atual = "carregando";
   else atual = situacao;
 
   return {
     sessao, perfil: atual === "ok" ? perfil : null, situacao: atual,
     pronto: atual !== "carregando",
-    tentarDeNovo: () => { setPerfilDe(null); setTentativa((n) => n + 1); },
+    tentarDeNovo: () => { setDesativada(false); setPerfilDe(null); setTentativa((n) => n + 1); },
   };
 }
 

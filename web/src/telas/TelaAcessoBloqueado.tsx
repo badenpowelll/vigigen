@@ -41,7 +41,9 @@ export function TelaAcessoBloqueado({ situacao, aoTentar }: { situacao: Situacao
           <Nota tipo="aviso">{t.corpo}</Nota>
           <div className="mt-4 flex flex-wrap gap-2">
             {t.tentar && <button type="button" className="botao-primario" onClick={aoTentar}>Tentar de novo</button>}
-            <button type="button" className="font-semibold text-[var(--destaque)] hover:underline" onClick={() => void sair()}>Sair</button>
+            {situacao === "desativado"
+              ? <button type="button" className="font-semibold text-[var(--destaque)] hover:underline" onClick={aoTentar}>Voltar ao login</button>
+              : <button type="button" className="font-semibold text-[var(--destaque)] hover:underline" onClick={() => void sair()}>Sair</button>}
           </div>
         </div>
       </main>
