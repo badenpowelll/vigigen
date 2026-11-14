@@ -205,11 +205,19 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
 }
 
 function Origem({ origem, lidoEm, carregando }: ReturnType<typeof useDados>) {
-  const texto =
-    origem === "conector" ? "Lido do banco agora, pelo seu conector Supabase"
-      : origem === "supabase" ? "Lido do banco agora"
-        : origem === "retrato" ? "Retrato embutido do banco"
-          : "Sem leitura";
+  const aoVivo = origem === "conector" || origem === "supabase";
+  if (aoVivo && lidoEm) {
+    const d = new Date(lidoEm);
+    const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const dia = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return (
+      <div className="rounded-pilula bg-[var(--superficie-2)] px-3 py-1 text-xs" role="status">
+        <span className="font-semibold">Sincronizado às {hora}</span>
+        <span className="text-suave"> · {dia} ({haQuanto(lidoEm)})</span>
+      </div>
+    );
+  }
+  const texto = origem === "retrato" ? "Retrato embutido do banco" : "Sem leitura";
   return (
     <div className="rounded-pilula bg-[var(--superficie-2)] px-3 py-1 text-xs" role="status">
       <span className="font-semibold">{carregando && origem === "retrato" ? "Tentando dado ao vivo… " : ""}{texto}</span>
