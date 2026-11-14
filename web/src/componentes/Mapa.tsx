@@ -52,10 +52,10 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
           {caminhos.map((c) => {
             const val = valores.get(c.g);
             const tem = val && val.v !== null && val.v !== undefined;
-            const fill = tem ? CLASSES[classe(val!.v as number, limites)] : "url(#hachura-sem-dado)";
+            const fill = !tem ? "url(#hachura-sem-dado)" : val!.v === 0 ? "var(--superficie)" : CLASSES[classe(val!.v as number, limites)];
             const rotulo = `${c.n}: ${tem ? `${formatar(val!.v as number)} ${unidade}` : `sem dado${val?.motivo ? ` (${val.motivo})` : ""}`}`;
             return (
-              <path key={c.g} d={c.d} fill={fill} stroke="var(--mag-traco)" strokeWidth={0.6}
+              <path key={c.g} d={c.d} fill={fill} stroke={tem && val!.v === 0 ? "var(--borda)" : "var(--mag-traco)"} strokeWidth={0.6}
                 tabIndex={0} role="button" aria-label={rotulo} aria-pressed={selecionado === c.g}
                 onMouseEnter={() => setFoco(c.g)} onMouseLeave={() => setFoco(null)}
                 onFocus={() => setFoco(c.g)} onBlur={() => setFoco(null)}
@@ -106,6 +106,9 @@ function Legenda({ limites, formatar, unidade }: { limites: number[]; formatar: 
           <span className="inline-block h-3 w-5 rounded-sm border border-borda" style={{ background: f.cor }} />{f.r}
         </span>
       ))}
+      <span className="num inline-flex items-center gap-1">
+        <span className="inline-block h-3 w-5 rounded-sm border border-borda" style={{ background: "var(--superficie)" }} />0 (zero observado)
+      </span>
       <span className="inline-flex items-center gap-1">
         <svg width="20" height="12" aria-hidden="true"><rect width="20" height="12" fill="url(#hachura-sem-dado)" stroke="var(--borda)" /></svg>
         sem dado

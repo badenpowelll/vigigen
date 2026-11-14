@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Ctx } from "./ctx";
 import { Alternador, Nota, Secao } from "../componentes/basicos";
 import { Mapa, TabelaMapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
-import { DOENCA_ROTULO, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
+import { DOENCA_ROTULO, fmtData, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
 
 type Camada = "incidencia" | "casos" | "cobertura";
 
@@ -38,8 +38,30 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
 
   const todosZero = camada === "cobertura" && [...valores.values()].every((v) => v.v === null || v.v === 0);
 
+  // Quatro estados da cobertura, contados sobre os municípios da malha (nada é inferido).
+  const estados = useMemo(() => {
+    if (camada !== "cobertura") return null;
+    const c = { calculavel: 0, zero: 0, semCasos: 0, semMunicipio: 0, insuficiente: 0 };
+    for (const gg of nomes.keys()) {
+      const x = cobMun.find((y) => y.g === gg);
+      if (!x) c.insuficiente++;
+      else if (x.v === null) (x.mot ?? "").startsWith("sem casos") ? c.semCasos++ : c.semMunicipio++;
+      else if (x.v === 0) c.zero++;
+      else c.calculavel++;
+    }
+    return c;
+  }, [camada, nomes, cobMun]);
+  const gb = dados.resumo?.genbank;
+  const rnSeq = dados.resumo?.sequencias_rn ?? [];
+  const rnSemMun = rnSeq.filter((x) => !x.por_nome);
+  const ultimoAnoColeta = Math.max(...(dados.resumo?.por_ano_brasil ?? []).map((x) => x.a));
+  const consultaGb = dados.resumo?.fontes?.genbank?.finalizado_em;
+
   return (
-    <Secao titulo="Mapa de calor do Rio Grande do Norte" subtitulo={`${camada === "cobertura" ? "Cobertura de sequenciamento" : DOENCA_ROTULO[doenca]} · ${periodo}`}
+    <Secao titulo="Mapa de calor do Rio Grande do Norte"
+      subtitulo={camada === "cobertura"
+        ? `Cobertura genômica observável no GenBank (dengue) · ${periodo} · consulta ao GenBank em ${fmtData(consultaGb)}`
+        : `${DOENCA_ROTULO[doenca]} · ${periodo}`}
       acoes={<>
         <Alternador rotulo="Camada do mapa" valor={camada} aoMudar={setCamada}
           opcoes={[{ v: "incidencia", r: "Incidência" }, { v: "casos", r: "Casos" }, { v: "cobertura", r: "Cobertura genômica" }]} />
@@ -47,6 +69,12 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
           {verTabela ? "Ver mapa" : "Ver como tabela"}
         </button>
       </>}>
+      {camada === "cobertura" && doenca !== "dengue" && (
+        <div className="mb-3"><Nota tipo="aviso">
+          Esta camada é só de dengue. A base não tem sequências de {DOENCA_ROTULO[doenca].toLowerCase()}: o VigiGen ainda não as
+          baixa do GenBank. Os percentuais abaixo são de dengue.
+        </Nota></div>
+      )}
       {todosZero && (
         <div className="mb-3"><Nota tipo="aviso">
           Nenhum município do RN tem sequência depositada com coleta neste trimestre. A cobertura é 0% onde houve casos e fica
@@ -59,10 +87,38 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
         : <Mapa malha={dados.malha} valores={valores} limites={limites} formatar={formatar} unidade={unidade}
             titulo={`Mapa: ${unidade}, ${periodo}`} selecionado={g} aoSelecionar={setG} />)
         : <Nota>Sem malha municipal carregada.</Nota>}
+      {estados && (
+        <dl className="mt-4 grid grid-cols-2 gap-3 text-sm lg:grid-cols-5">
+          {[
+            ["Percentual calculável", estados.calculavel, "há sequência com município e casos no trimestre"],
+            ["Zero observado", estados.zero, "houve casos e nenhuma sequência com município"],
+            ["Sem casos", estados.semCasos, "sem casos notificados no trimestre (sem denominador)"],
+            ["Sem município identificável", estados.semMunicipio, "há sequência do RN no trimestre, mas sem município"],
+            ["Dados insuficientes", estados.insuficiente, "sem registro do indicador para o município"],
+          ].map(([r, n, d]) => (
+            <div key={r as string} className="rounded-[var(--raio)] border border-borda p-3">
+              <dt className="rotulo">{r}</dt>
+              <dd className="num mt-1 text-xl font-bold">{fmtNum(n as number)} <span className="text-xs font-normal text-suave">município(s)</span></dd>
+              <dd className="text-xs text-suave">{d}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {camada === "cobertura" && gb && (
+        <div className="mt-4 rounded-[var(--raio)] border border-borda p-3 text-sm">
+          <p className="rotulo">Nível estadual · o que a base genômica permite ver</p>
+          <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
+            <li>{fmtNum(gb.rn)} sequência(s) de dengue do RN em toda a base, e {fmtNum(rnSemMun.filter((x) => x.geo).length)} delas só com o estado no local de origem
+              {rnSemMun.length > 0 && <> ({rnSemMun.map((x) => `${x.acc}, coleta ${x.coleta ?? "sem data"}`).join("; ")})</>}.</li>
+            <li>Ano de coleta mais recente entre as {fmtNum(gb.total)} sequências brasileiras: {Number.isFinite(ultimoAnoColeta) ? ultimoAnoColeta : "sem dado"}.</li>
+            <li>Coletas com só o ano informado não entram no cálculo trimestral; a oportunidade usa só coletas com dia.</li>
+          </ul>
+        </div>
+      )}
       <p className="mt-3 text-xs text-suave">
         Malha: IBGE, limites municipais {dados.malha?.ano_referencia ?? ""} (geometria simplificada para exibição).
         Classes por quantis dos valores positivos; a hachura marca município sem dado, que não é o mesmo que zero.
-        {camada === "cobertura" && ` Cobertura = sequências com coleta no trimestre e município identificado ÷ casos notificados de dengue. Valor exibido em %: ${fmtPct(0.0001, 2)} equivale a 1 sequência a cada 10 mil casos.`}
+        {camada === "cobertura" && ` Cobertura observável = sequências de dengue no GenBank com coleta no trimestre e município identificado ÷ casos notificados de dengue (InfoDengue) no mesmo trimestre e município. Valor em %: ${fmtPct(0.0001, 2)} equivale a 1 sequência a cada 10 mil casos. Mede o que está depositado e identificável na base pública, não o sequenciamento realizado pelos laboratórios, e não é representativa da circulação viral.`}
       </p>
     </Secao>
   );
