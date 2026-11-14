@@ -1,0 +1,53 @@
+# Teste do pipeline de classificação SEM banco: baixa um lote pequeno de
+# sequências públicas reais do GenBank (efetch), roda src.pipeline.classify com a
+# versão fixada no nextclade.yml e imprime resultados, versões e hashes.
+# Não usa segredo e não grava em produção.
+name: nextclade-teste
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-8j8kg6]
+    paths: [.github/workflows/nextclade-teste.yml]
+jobs:
+  teste:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXTCLADE_VERSAO: "3.29.0"
+      NEXTCLADE_DATASET_SOROTIPO: nextstrain/dengue/all
+      NEXTCLADE_DATASET_LINHAGEM: community/v-gen-lab/dengue/denv{n}
+      # 7 sequências associadas ao RN no banco + 3 genomas completos brasileiros recentes (DENV-1, 2 e 3)
+      ACCESSIONS: HM450098,KF672773,HQ012514,HQ012515,OR501013,AF529071,AF529073,OZ570442,PQ340826,PX470089
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements.txt
+      - name: Nextclade
+        run: |
+          curl -fsSL "https://github.com/nextstrain/nextclade/releases/download/${NEXTCLADE_VERSAO}/nextclade-x86_64-unknown-linux-gnu" -o /usr/local/bin/nextclade
+          chmod +x /usr/local/bin/nextclade
+          nextclade --version
+          sha256sum /usr/local/bin/nextclade
+      - name: Datasets de dengue disponíveis
+        run: python -m src.pipeline.classify listar
+      - name: Baixar FASTA do GenBank
+        run: |
+          mkdir -p data/interim
+          curl -fsS "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&rettype=fasta&retmode=text&id=${ACCESSIONS}" -o data/interim/lote.fasta
+          grep -c '^>' data/interim/lote.fasta
+          grep '^>' data/interim/lote.fasta
+          sha256sum data/interim/lote.fasta
+      - name: Classificar (sorotipo e linhagem)
+        run: python -m src.pipeline.classify rodar --fasta data/interim/lote.fasta
+      - name: Resultado
+        if: always()
+        run: |
+          column -t -s $'\t' data/interim/nextclade/classificacao.tsv || cat data/interim/nextclade/classificacao.tsv
+          cat data/interim/nextclade/versoes.json
+          sha256sum data/interim/nextclade/*.tsv
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nextclade-teste
+          path: data/interim/nextclade/
