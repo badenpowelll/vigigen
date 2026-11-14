@@ -5,6 +5,7 @@ import { KpiCard, Secao, StatusBadge, IconeNivel, Nota, type Nivel } from "../co
 import { Mapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
 import { GraficoLinhas } from "../componentes/Graficos";
 import { ListaMunicipios } from "../componentes/ListaMunicipios";
+import { HistoricoMunicipio } from "../componentes/HistoricoMunicipio";
 import { agregarEstado, atualidadeSerie, coberturaMunicipio, estadoDeteccao, genomicaDe, posicao, ultimos, valorNaSE } from "../dados/calc";
 import { ult12Retrato } from "../dados/useDados";
 import { DOENCA_ROTULO, COR_DOENCA, fmtData, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
@@ -126,6 +127,8 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
           <p className="mt-2 text-xs text-suave">A linha tracejada é a estimativa do InfoDengue que corrige o atraso de notificação nas semanas recentes.</p>
         </Secao>
       </div>
+
+      {g !== null && <HistoricoMunicipio dados={dados} g={g} nomeSel={nomeSel} doenca={doenca} />}
 
       {g === null && (
         <Secao id="lista-municipios" titulo={`Municípios do Rio Grande do Norte · ${DOENCA_ROTULO[doenca]}`}
