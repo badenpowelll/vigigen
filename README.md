@@ -51,6 +51,9 @@ docs/                fontes, decisões, relatório de carga, marca
 ```bash
 pip install -r requirements.txt
 python -m src.ingest --fonte ibge|infodengue|genbank   # local, grava em data/raw/
+python -m src.ingest --fonte sinan --ano 2026 --agravo todos   # SINAN só em contagens (D-020)
+python -m src.ingest --fonte cnes                            # estabelecimentos do RN (D-020)
+python -m src.ingest --fonte inmet --ano 2026 [--banco]      # estações do INMET no RN (D-021)
 python -m pytest -q
 cd web && npm ci && npm run build            # painel web (precisa de web/.env)
 cd web && npm run build:artefato && node scripts/fragmento-artefato.mjs   # painel claude.ai

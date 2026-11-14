@@ -1,0 +1,505 @@
+{
+ "_fonte": "API DEMAS (Ministério da Saúde), swagger v1.8.32",
+ "_url": "https://apidadosabertos.saude.gov.br/arboviroses/zikavirus?nu_ano=2026&id_municip=240810&limit=50&offset=0",
+ "_obtido_em": "2026-11-14T17:37:35Z",
+ "_status_http": 200,
+ "_sha256_resposta_original": "33dbc192f15681ea66ed80b6c657b2115e59b252142761e94b8ec47168ed527d",
+ "_bytes_resposta_original": 42207,
+ "_chave_raiz": "zikavirus",
+ "_colunas_na_resposta": [
+  "ano_nasc",
+  "classi_fin",
+  "comuninf",
+  "copaisinf",
+  "coufinf",
+  "criterio",
+  "cs_escol_n",
+  "cs_flxret",
+  "cs_gestant",
+  "cs_raca",
+  "cs_sexo",
+  "cs_suspeit",
+  "doenca_tra",
+  "dt_digita",
+  "dt_encerra",
+  "dt_invest",
+  "dt_notific",
+  "dt_obito",
+  "dt_sin_pri",
+  "evolucao",
+  "flxrecebi",
+  "id_agravo",
+  "id_mn_resi",
+  "id_municip",
+  "id_ocupa_n",
+  "id_pais",
+  "id_regiona",
+  "id_rg_resi",
+  "id_unidade",
+  "in_vincula",
+  "nduplic_n",
+  "nu_ano",
+  "nu_idade_n",
+  "sem_not",
+  "sem_pri",
+  "sg_uf",
+  "sg_uf_not",
+  "tp_not",
+  "tp_sistema",
+  "tpautocto",
+  "tpuninot"
+ ],
+ "_nota": "Resposta real reduzida às colunas usadas na agregação; nenhuma coluna pessoal.",
+ "registros": [
+  {
+   "nu_ano": "2026",
+   "sem_not": "202613",
+   "id_municip": "240810",
+   "id_mn_resi": "240450",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202614",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "2",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202614",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202614",
+   "id_municip": "240810",
+   "id_mn_resi": "240325",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202615",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202615",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202615",
+   "id_municip": "240810",
+   "id_mn_resi": "241420",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202615",
+   "id_municip": "240810",
+   "id_mn_resi": "240360",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202615",
+   "id_municip": "240810",
+   "id_mn_resi": "240580",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202616",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202616",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202617",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202632",
+   "id_municip": "240810",
+   "id_mn_resi": "240325",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202632",
+   "id_municip": "240810",
+   "id_mn_resi": "241300",
+   "classi_fin": "nan",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202632",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202634",
+   "id_municip": "240810",
+   "id_mn_resi": "241120",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202634",
+   "id_municip": "240810",
+   "id_mn_resi": "241120",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202635",
+   "id_municip": "240810",
+   "id_mn_resi": "240325",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202635",
+   "id_municip": "240810",
+   "id_mn_resi": "241230",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202605",
+   "id_municip": "240810",
+   "id_mn_resi": "240980",
+   "classi_fin": "1",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202605",
+   "id_municip": "240810",
+   "id_mn_resi": "241220",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202606",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202607",
+   "id_municip": "240810",
+   "id_mn_resi": "241020",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202607",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202608",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202608",
+   "id_municip": "240810",
+   "id_mn_resi": "240450",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202608",
+   "id_municip": "240810",
+   "id_mn_resi": "240980",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202608",
+   "id_municip": "240810",
+   "id_mn_resi": "240325",
+   "classi_fin": "1",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202608",
+   "id_municip": "240810",
+   "id_mn_resi": "240680",
+   "classi_fin": "1",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202601",
+   "id_municip": "240810",
+   "id_mn_resi": "241150",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202602",
+   "id_municip": "240810",
+   "id_mn_resi": "241150",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202602",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202603",
+   "id_municip": "240810",
+   "id_mn_resi": "240325",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202603",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202603",
+   "id_municip": "240810",
+   "id_mn_resi": "240260",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202604",
+   "id_municip": "240810",
+   "id_mn_resi": "240260",
+   "classi_fin": "2",
+   "criterio": "2",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202604",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202626",
+   "id_municip": "240810",
+   "id_mn_resi": "240325",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202627",
+   "id_municip": "240810",
+   "id_mn_resi": "241340",
+   "classi_fin": "nan",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202627",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202627",
+   "id_municip": "240810",
+   "id_mn_resi": "240710",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202628",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202628",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "2",
+   "criterio": "2",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202628",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202628",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202629",
+   "id_municip": "240810",
+   "id_mn_resi": "241320",
+   "classi_fin": "2",
+   "criterio": "2",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202629",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "8",
+   "criterio": "nan",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202629",
+   "id_municip": "240810",
+   "id_mn_resi": "240325",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202629",
+   "id_municip": "240810",
+   "id_mn_resi": "240450",
+   "classi_fin": "1",
+   "criterio": "1",
+   "sorotipo": null
+  },
+  {
+   "nu_ano": "2026",
+   "sem_not": "202630",
+   "id_municip": "240810",
+   "id_mn_resi": "240810",
+   "classi_fin": "2",
+   "criterio": "1",
+   "sorotipo": null
+  }
+ ]
+}

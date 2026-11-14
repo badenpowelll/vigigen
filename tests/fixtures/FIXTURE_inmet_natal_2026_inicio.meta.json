@@ -1,0 +1,11 @@
+{
+ "_fonte": "INMET, dados históricos das estações automáticas",
+ "_url": "https://portal.inmet.gov.br/uploads/dadoshistoricos/2026.zip",
+ "_obtido_em": "2026-11-14T17:43:54Z",
+ "_sha256_zip": "e50640dee9556273fcdf02874fc88518c5a82a377e3780eb0fcdf202cb9006fd",
+ "_arquivo": "INMET_NE_RN_A304_NATAL_01-01-2026_A_31-10-2026.CSV",
+ "_sha256_arquivo": "9bfb08a01c1688814b2e4c1f5a959bd72fd006d0064133858550916c519b49f9",
+ "_bytes_arquivo": 632874,
+ "_nota": "As 200 primeiras linhas do CSV original, sem alteração (o resto do arquivo fica fora do repositório).",
+ "_linhas_no_arquivo": 7306
+}

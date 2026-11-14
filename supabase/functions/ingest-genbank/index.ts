@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
     // 2) efetch em lotes, até o orçamento de tempo
     while (p.cursor < p.ids.length && Date.now() - inicio < ORCAMENTO_MS) {
       const lote = p.ids.slice(p.cursor, p.cursor + LOTE);
-      const params = { db: "nuccore", rettype: "gb", retmode: "xml", ...comuns() };
+      const params: Record<string, string> = { db: "nuccore", rettype: "gb", retmode: "xml", ...comuns() };
       const form = new URLSearchParams({ ...params, id: lote.join(",") });
       const r = await buscar(`${EUTILS}/efetch.fcgi`, {
         method: "POST",

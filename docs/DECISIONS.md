@@ -228,3 +228,52 @@ Pedido por Baden (auditorias de 14/11). O que mudou e por quê:
   grupos de opção com setas, gráficos percorríveis pelo teclado com dica
   flutuante, dicas "i" nos indicadores, regiões roláveis focáveis. Verificado com
   axe-core 4.10.2 nas 8 abas, nos dois temas, em 1366 px e 390 px: zero violações.
+
+## D-020 — SINAN (agregado) e CNES pela API de Dados Abertos do Ministério da Saúde (14/11/2026)
+
+Pedido por Baden ("implementar essas apis https://apidadosabertos.saude.gov.br/v1/").
+Swagger v1.8.32, sondado do GitHub Actions em 14/11/2026 (workflow `sondar-fontes`).
+
+- **A rota do SINAN devolve microdados**: um registro por notificação, com
+  idade, sexo, raça, escolaridade, gestação e datas. A regra 4 proíbe guardar
+  isso. O parâmetro `campos`, que pediria só as colunas da chave, respondeu
+  200 com `limit=5` (20 s) e **502 após 60 s** com `limit=1000` nos três agravos
+  (sondagem de 14/11/2026), então não serve para a carga. A função soma na memória por uma chave sem coluna pessoal (ano, semana
+  de notificação, município notificador, município de residência,
+  classificação final, critério e sorotipo) e grava em `public.bruto` só essas
+  contagens, com o sha256, o tamanho e o número de registros da resposta
+  original. **Exceção à regra 3**: a resposta original não é gravada; o sha256
+  prova qual resposta foi somada. Python e Edge Function agregam igual (teste).
+- **Filtro por município da unidade notificadora** (`id_municip`), não da
+  residência. Por isso a função percorre os 167 municípios do RN e o painel
+  soma por residência (`id_mn_resi`), comparável ao InfoDengue. Residência
+  fora do RN fica sem geocódigo (só estado).
+- **Classificação final em código**, como o SINAN publica; o dicionário de
+  dados do SINAN traduz. Nada é recodificado.
+- **CNES**: cadastro público, gravado inteiro. Na tabela normalizada, o nome de
+  estabelecimento sem CNPJ (pessoa física) fica nulo.
+- **Volumes medidos**: dengue em Natal, 5.289 notificações em 2025 e 2.290 em
+  2026 (páginas de 1000); 6.201 estabelecimentos ativos no RN (311 páginas de 20).
+- **Licença**: os conjuntos de arboviroses no dados.gov.br estão sob CC BY-ND
+  3.0; publicar contagens derivadas pede leitura jurídica antes do painel público.
+- Migração 017 (tabelas, view da execução vigente, `painel_sinan`) e 019
+  (agendamento) **não aplicadas**; dependem da aprovação do Baden.
+
+## D-021 — Clima das estações do INMET no RN (14/11/2026)
+
+Pedido por Baden ("conectar api do INMET").
+
+- A rota `https://apitempo.inmet.gov.br/estacao/{inicio}/{fim}/{codigo}`
+  respondeu **204 sem corpo** em 14/11/2026 para A304 (Natal); `/estacoes/T`
+  respondeu 200. Sem token documentado, a rota de dados não é usada.
+- Fonte usada: o arquivo anual oficial
+  `https://portal.inmet.gov.br/uploads/dadoshistoricos/<ano>.zip` (2026: 82 MB,
+  634 estações, até 31/10/2026). Sete estações do RN: A304 Natal, A316 Caicó,
+  A317 Macau, A318 Mossoró, A340 Apodi, A367 Santa Cruz, A372 Ipanguaçu.
+- O ZIP é grande demais para uma Edge Function; quem baixa é o CLI
+  (`python -m src.ingest --fonte inmet --ano 2026 [--banco]`), que grava o ZIP
+  em `data/raw/inmet/` e, com `--banco`, cada CSV do RN inteiro em
+  `public.bruto`. A migração 018 normaliza chuva, temperatura e umidade
+  horárias e soma por semana de domingo a sábado; semana com hora faltando não
+  tem soma de chuva. Municípios sem estação não recebem valor interpolado.
+- Migração 018 **não aplicada**.
