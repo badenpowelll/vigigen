@@ -327,3 +327,18 @@ sustentar"), a partir da proposta do módulo de focos. Detalhes em `docs/FOCOS.m
   SVSA/DEDT/CGARB, 2025). Não descrevem o que a gestão fez (não há esse dado) e
   não classificam o município nos estágios do plano, que dependem do canal
   endêmico local, ainda não calculado pelo VigiGen.
+
+## D-024 — Logomarca e carimbo de impressão em todo PDF e impressão (14/11/2026)
+
+- **Regra do Baden**: todo relatório em PDF ou impresso traz cabeçalho e rodapé
+  com a logomarca Hélice-pulso e, em cada página, a matrícula e o e-mail de quem
+  imprimiu e a data e hora com segundos (horário de Brasília).
+- **PDF (jsPDF)**: a marca é desenhada em vetor (`web/src/marcaPdf.ts`, mesma
+  geometria do SVG), em todas as páginas, com "Página X de Y".
+- **Impressão do navegador**: moldura de tabela (thead/tfoot) que o navegador
+  repete em cada página; o carimbo é gerado no segundo do clique em Imprimir.
+- **Matrícula**: o perfil não tinha esse campo. A migração 022 (NÃO aplicada)
+  acrescenta `perfil.matricula` e a devolve em `meu_perfil()`. Até ela ser
+  aplicada e preenchida, o carimbo diz "matrícula não cadastrada"; no artefato
+  do claude.ai, que não tem login, diz que não há usuário identificado.
+- CSV e XLSX levam o mesmo carimbo na linha "Impressão" dos metadados.

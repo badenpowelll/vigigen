@@ -9,6 +9,8 @@ export interface Ctx {
   serieMun: Serie | null;
   setG: (g: number | null) => void;
   setDoenca?: (d: Doenca) => void;
+  /** quem está logado, para o carimbo das exportações; null no artefato do claude.ai (sem login) */
+  usuario?: { email: string; matricula: string | null } | null;
   irPara: (aba: "visao" | "serie" | "mapa" | "alertas" | "qualidade" | "perfil" | "relatorios" | "sobre") => void;
 }
 

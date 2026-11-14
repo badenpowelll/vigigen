@@ -105,7 +105,8 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
   }, [admin]);
 
   const nomeSel = g === null ? "Rio Grande do Norte" : municipios.find((m) => m.g === g)?.n ?? "—";
-  const ctx: Ctx = { dados, doenca, g, nomeSel, serieMun, setG: (x) => { setG(x); registrarUso("selecao_municipio"); }, setDoenca: (d) => { setDoenca(d); registrarUso(`doenca:${d}`); }, irPara };
+  const ctx: Ctx = { dados, doenca, g, nomeSel, serieMun, setG: (x) => { setG(x); registrarUso("selecao_municipio"); }, setDoenca: (d) => { setDoenca(d); registrarUso(`doenca:${d}`); }, irPara,
+    usuario: perfil ? { email: perfil.email, matricula: perfil.matricula ?? null } : null };
 
   return (
     <div className="min-h-screen">

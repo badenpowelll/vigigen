@@ -249,6 +249,8 @@ a { color: var(--interactive); }
 .tabela-relatorio th { padding: 6px 10px; border-bottom: 2px solid var(--borda); font-weight: 600; white-space: nowrap; }
 .tabela-relatorio td { padding: 5px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
 .so-impressao { display: none; }
+.impressao-moldura, .impressao-moldura > tbody, .impressao-moldura > tbody > tr, .impressao-moldura > tbody > tr > td { display: block; }
+.impressao-cabecalho, .impressao-rodape { display: none; }
 @media print {
   body.imprimindo-relatorio * { visibility: hidden; }
   body.imprimindo-relatorio #area-impressao, body.imprimindo-relatorio #area-impressao * { visibility: visible; }
@@ -258,6 +260,20 @@ a { color: var(--interactive); }
   body.imprimindo-relatorio .overflow-x-auto { overflow: visible; }
   body.imprimindo-relatorio #area-impressao .cartao { box-shadow: none; border: 0; }
   body.imprimindo-relatorio .tabela-relatorio { font-size: 9pt; }
+  /* moldura: thead/tfoot repetidos pelo navegador em cada página */
+  @page { margin: 12mm; }
+  body.imprimindo-relatorio .impressao-moldura { display: table; width: 100%; border-collapse: collapse; }
+  body.imprimindo-relatorio .impressao-moldura > tbody { display: table-row-group; }
+  body.imprimindo-relatorio .impressao-moldura > tbody > tr { display: table-row; }
+  body.imprimindo-relatorio .impressao-moldura > tbody > tr > td { display: table-cell; }
+  body.imprimindo-relatorio .impressao-cabecalho { display: table-header-group; }
+  body.imprimindo-relatorio .impressao-rodape { display: table-footer-group; }
+  body.imprimindo-relatorio .impressao-faixa { display: flex; align-items: center; gap: 8px; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body.imprimindo-relatorio .impressao-cabecalho .impressao-faixa { padding-bottom: 4px; margin-bottom: 8px; border-bottom: 1.5px solid #1351b4; }
+  body.imprimindo-relatorio .impressao-cabecalho strong { display: block; color: #1351b4; font-size: 13pt; line-height: 1.1; }
+  body.imprimindo-relatorio .impressao-cabecalho span { display: block; font-size: 8pt; color: #555; }
+  body.imprimindo-relatorio .impressao-rodape .impressao-faixa { padding-top: 4px; margin-top: 8px; border-top: 0.5px solid #bbb; font-size: 7.5pt; color: #444; }
+
 }
 
 /* ---------- Dica (tooltip acessível) ---------- */
