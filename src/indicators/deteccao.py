@@ -89,3 +89,31 @@ def detectar(contagens: dict[tuple[str, str], dict[str, int]], cobertura: dict[t
             alertas.append(Alerta("R3_queda_cobertura", territorio, periodo,
                                   {"cobertura": cob, "mediana_janela": med, "limiar": QUEDA_COBERTURA}))
     return alertas
+
+
+ESTADO = "RN"  # território estadual; municípios usam o geocódigo IBGE em texto
+
+
+def montar_contagens(linhas) -> dict[tuple[str, str], dict[str, int]]:
+    """linhas: (geocodigo | None, periodo 'AAAAT#', linhagem). Cada sequência conta no
+    município (se houver) e sempre no estado."""
+    c: dict[tuple[str, str], dict[str, int]] = {}
+    for geo, periodo, lin in linhas:
+        for terr in ([str(geo)] if geo is not None else []) + [ESTADO]:
+            d = c.setdefault((terr, periodo), {})
+            d[lin] = d.get(lin, 0) + 1
+    return c
+
+
+def trimestres_entre(inicio: str, fim: str) -> list[str]:
+    """Inclusivo nos dois extremos, em ordem."""
+    out, p = [], fim
+    while p >= inicio:
+        out.append(p)
+        p = trimestres_anteriores(p, 1)[0]
+    return out[::-1]
+
+
+def parametros() -> dict:
+    return {"janela_trimestres": JANELA_TRIMESTRES, "min_sequencias": MIN_SEQUENCIAS,
+            "z_wilson": Z, "queda_cobertura": QUEDA_COBERTURA}

@@ -2,6 +2,7 @@
 
   python -m src.db.load exportar-fasta  data/interim/seq.fasta
   python -m src.db.load carregar-nextclade data/interim/nextclade/classificacao.tsv
+  python -m src.db.load detectar-alertas  data/interim/deteccao.json
 
 Precisa de DATABASE_URL (conexão Postgres do Supabase, papel com escrita em
 classificacao e exclusao_qc). Nunca versionar a URL.
@@ -71,11 +72,72 @@ def carregar_nextclade(tsv: Path) -> dict:
     return {"classificadas": ok, "excluidas": excl, **versoes}
 
 
+def detectar_alertas(relatorio: Path, inicio: str = "2020T1") -> dict:
+    """Roda R1, R2 e R3 em cada município do RN e no estado, trimestre a trimestre,
+    só sobre trimestres fechados e só com sequências aprovadas no QC (as que estão em
+    classificacao). Cada alerta nasce "novo"; a mesma regra, território, período e
+    linhagem não é gravada duas vezes. O relatório registra também o que NÃO pôde ser
+    avaliado (trimestres abaixo do mínimo de sequências), para a ausência de alerta
+    não ser lida como ausência de mudança."""
+    from src.indicators.deteccao import (ESTADO, MIN_SEQUENCIAS, detectar, montar_contagens,
+                                         parametros, trimestres_entre)
+    with conectar() as con:
+        fim = con.execute("select app.trimestre((date_trunc('quarter', current_date) - interval '1 day')::date)").fetchone()[0]
+        linhas = con.execute("""
+            select s.geocodigo, app.trimestre(s.data_coleta_inicio), coalesce(c.linhagem, c.genotipo, c.sorotipo)
+            from public.classificacao c join public.sequencia s using (accession)
+            where s.uf_inferida = 'RN' and s.data_coleta_inicio is not null
+              and coalesce(c.linhagem, c.genotipo, c.sorotipo) is not null""").fetchall()
+        contagens = montar_contagens(linhas)
+        cobertura: dict = {}
+        for geo, nivel, periodo, valor in con.execute("""
+                select geocodigo, nivel, periodo, valor from public.indicador
+                where tipo = 'cobertura_sequenciamento' and periodo like '____T_'"""):
+            terr = ESTADO if nivel == "estado" else str(geo)
+            cobertura[(terr, periodo)] = float(valor) if valor is not None else None
+        municipios = [str(g) for (g,) in con.execute("select geocodigo from public.municipio")]
+        periodos = trimestres_entre(inicio, fim)
+        gravados = repetidos = 0
+        abaixo_minimo = 0
+        for terr in municipios + [ESTADO]:
+            for p in periodos:
+                if sum(contagens.get((terr, p), {}).values()) < MIN_SEQUENCIAS:
+                    abaixo_minimo += 1
+                for a in detectar(contagens, cobertura, terr, p):
+                    geo = None if terr == ESTADO else int(terr)
+                    ev = {**a.evidencia, "parametros": parametros(), "territorio": terr}
+                    cur = con.execute("""
+                        insert into public.alerta (geocodigo, tipo, periodo_deteccao, evidencia)
+                        select %s, %s, %s, %s::jsonb where not exists (
+                          select 1 from public.alerta where geocodigo is not distinct from %s and tipo = %s
+                            and periodo_deteccao = %s
+                            and coalesce(evidencia->>'linhagem', '') = coalesce(%s, ''))""",
+                        (geo, a.regra, a.periodo, json.dumps(ev), geo, a.regra, a.periodo,
+                         a.evidencia.get("linhagem")))
+                    if cur.rowcount:
+                        gravados += 1
+                    else:
+                        repetidos += 1
+        resumo = {"periodos": [periodos[0], periodos[-1]], "territorios": len(municipios) + 1,
+                  "sequencias_rn_classificadas": len(linhas),
+                  "pares_territorio_trimestre": (len(municipios) + 1) * len(periodos),
+                  "pares_abaixo_do_minimo": abaixo_minimo,
+                  "alertas_gravados": gravados, "alertas_ja_existentes": repetidos,
+                  "parametros": parametros()}
+        con.execute("insert into public.auditoria (ator, acao, entidade, detalhe) values (%s, %s, %s, %s)",
+                    ("pipeline:deteccao", "deteccao", "alerta", json.dumps(resumo)))
+    relatorio.parent.mkdir(parents=True, exist_ok=True)
+    relatorio.write_text(json.dumps(resumo, ensure_ascii=False, indent=2), encoding="utf-8")
+    return resumo
+
+
 if __name__ == "__main__":
     cmd, arq = sys.argv[1], Path(sys.argv[2])
     if cmd == "exportar-fasta":
         print(exportar_fasta(arq), "sequências")
     elif cmd == "carregar-nextclade":
         print(carregar_nextclade(arq))
+    elif cmd == "detectar-alertas":
+        print(detectar_alertas(arq))
     else:
-        raise SystemExit("comandos: exportar-fasta | carregar-nextclade")
+        raise SystemExit("comandos: exportar-fasta | carregar-nextclade | detectar-alertas")
