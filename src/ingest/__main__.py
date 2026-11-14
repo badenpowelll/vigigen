@@ -1,4 +1,4 @@
-"""CLI: python -m src.ingest --fonte {ibge|infodengue|genbank|todas}
+"""CLI: python -m src.ingest --fonte {ibge|infodengue|genbank|todas} [--agravo dengue|chikungunya|zika|todos]
 
 Ao final gera docs/INGESTAO_RELATORIO.md com endpoint, data e hora do acesso,
 número de registros e período coberto de cada fonte.
@@ -19,6 +19,8 @@ def main() -> None:
     ap.add_argument("--amostra", action="store_true",
                     help="InfoDengue: só uma chamada para Natal, para conferir os campos")
     ap.add_argument("--ano-inicio", type=int, default=2020)
+    ap.add_argument("--agravo", choices=["dengue", "chikungunya", "zika", "todos"], default="dengue",
+                    help="GenBank: qual vírus buscar (padrão: dengue)")
     a = ap.parse_args()
 
     if a.amostra:
@@ -31,7 +33,8 @@ def main() -> None:
     if a.fonte in ("infodengue", "todas"):
         resultados.append(infodengue.executar(a.ano_inicio))
     if a.fonte in ("genbank", "todas"):
-        resultados.append(genbank.executar())
+        agravos = ["dengue", "chikungunya", "zika"] if a.agravo == "todos" else [a.agravo]
+        resultados += [genbank.executar(x) for x in agravos]
     relatorio(resultados)
 
 

@@ -5,8 +5,9 @@ import { DOENCAS } from "../dados/tipos";
 import { Alternador, Nota, Secao } from "../componentes/basicos";
 import { BarrasComposicao, GraficoLinhas } from "../componentes/Graficos";
 import { COR_DOENCA, COR_SOROTIPO, DOENCA_ROTULO, SOROTIPOS, fmtNum, fmtPct } from "../util";
+import { SIGLA_VIRUS, genomicaDe, motivoSemGenomica } from "../dados/calc";
 
-export function TelaSerie({ dados, g, nomeSel }: Ctx) {
+export function TelaSerie({ dados, g, nomeSel, doenca }: Ctx) {
   const [medida, setMedida] = useState<"c" | "i">("c");
   const [desde, setDesde] = useState<"2020" | "2024">("2020");
   const [series, setSeries] = useState<Partial<Record<Doenca, Serie | null>>>({});
@@ -26,14 +27,17 @@ export function TelaSerie({ dados, g, nomeSel }: Ctx) {
     const s = series[d]!;
     return { nome: DOENCA_ROTULO[d], cor: COR_DOENCA[d], pontos: s.se.map((_, k) => ({ t: new Date(s.dt[k]), v: s[medida][k] })) };
   });
-  const comp = dados.resumo?.composicao_brasil ?? [];
-  const gb = dados.resumo?.genbank;
-  const porAno = dados.resumo?.por_ano_brasil ?? [];
+  const gen = genomicaDe(dados.resumo, doenca);
+  const agr = DOENCA_ROTULO[doenca].toLowerCase();
+  const comp = gen.r?.composicao_brasil ?? [];
+  const gb = gen.estado === "ok" ? gen.r?.genbank : undefined;
+  const porAno = gen.r?.por_ano_brasil ?? [];
   const anos = porAno.map((x) => x.a).sort((a, b) => a - b);
   const comData = porAno.reduce((t, x) => t + x.n, 0);
   const comEstado = gb ? gb.total - gb.brasil_sem_estado - gb.sem_geo : 0;
   const semSoro = gb?.por_sorotipo?.["não declarado"] ?? 0;
-  const totRN = dados.resumo?.genbank.rn ?? 0;
+  const totRN = gb?.rn ?? 0;
+  const anosRecentes = porAno.filter((x) => x.a >= 2010).sort((a, b) => b.a - a.a);
 
   return (
     <div className="flex flex-col gap-4">
@@ -58,6 +62,29 @@ export function TelaSerie({ dados, g, nomeSel }: Ctx) {
         )}
       </Secao>
 
+      {doenca !== "dengue" ? (
+      <Secao titulo={`Sequências de ${agr} (${SIGLA_VIRUS[doenca]}) do Brasil no GenBank, por ano de coleta`}
+        subtitulo="Contagem de sequências depositadas. Chikungunya e Zika não têm sorotipos como a dengue; genótipo e linhagem dependem de classificação ainda não definida.">
+        {gen.estado !== "ok" ? <Nota tipo="aviso">{motivoSemGenomica(doenca, gen.estado)}</Nota> : (
+          <>
+            <div className="mb-3"><Nota>Os números representam as sequências disponíveis no GenBank, não a circulação do vírus na população.</Nota></div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="text-left"><th className="py-1 pr-3">Ano de coleta</th><th className="py-1 pr-3 text-right">Sequências do Brasil</th><th className="py-1 text-right">Do RN</th></tr></thead>
+                <tbody>
+                  {anosRecentes.map((x) => (
+                    <tr key={x.a} className="border-t border-borda">
+                      <td className="num py-1 pr-3">{x.a}</td><td className="num py-1 pr-3 text-right">{fmtNum(x.n)}</td><td className="num py-1 text-right">{fmtNum(x.rn)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {gb && <p className="mt-2 text-xs text-suave">{fmtNum(gb.total)} sequências no total; {fmtNum(gb.total - comData)} sem data de coleta; {fmtNum(gb.rn)} do RN. Fonte: NCBI GenBank, termo {gb.termo}.</p>}
+          </>
+        )}
+      </Secao>
+      ) : (
       <Secao titulo="Distribuição dos sorotipos informados nos metadados das sequências brasileiras"
         subtitulo={<>Proporção por ano de coleta, no mesmo eixo de tempo da série acima. Escala <strong>Brasil</strong>: o RN tem só {totRN} sequência(s) com estado identificado no GenBank, poucas para uma composição anual.</>}>
         <div className="mb-3">
@@ -97,6 +124,7 @@ export function TelaSerie({ dados, g, nomeSel }: Ctx) {
           "Não declarado" não é um sorotipo: é a parte que só a classificação vai resolver. Fonte: NCBI GenBank, termo {gb?.termo}.
         </p>
       </Secao>
+      )}
     </div>
   );
 }

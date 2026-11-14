@@ -5,6 +5,7 @@ import type { Doenca, Serie } from "./dados/tipos";
 import type { Ctx } from "./telas/ctx";
 import { FONTE_GENBANK, FONTE_INFODENGUE } from "./telas/ctx";
 import { DOENCA_ROTULO, fmtDataHora, fmtSE } from "./util";
+import { SIGLA_VIRUS, genomicaDe, motivoSemGenomica } from "./dados/calc";
 
 export type Celula = string | number | null;
 export interface Coluna { r: string; tipo?: "txt" | "num" | "pct" }
@@ -30,8 +31,11 @@ function linhasSerie(s: Serie | null | undefined): Celula[][] {
 }
 
 export function montarRelatorios({ dados, doenca, g, nomeSel, serieMun }: Ctx): Relatorio[] {
-  const r = dados.resumo!;
+  const gen = genomicaDe(dados.resumo, doenca);
+  const r = gen.r!;
   const agr = DOENCA_ROTULO[doenca];
+  const agrMin = agr.toLowerCase();
+  const notaGen = gen.estado === "ok" ? [] : [motivoSemGenomica(doenca, gen.estado)];
   const nomes = new Map((dados.malha?.features ?? []).map((f) => [f.properties.g, f.properties.n]));
   const nome = (x: number | null) => (x === null ? "Rio Grande do Norte (estado)" : nomes.get(x) ?? String(x));
   const sem = dados.semana[doenca as Doenca];
@@ -72,8 +76,8 @@ export function montarRelatorios({ dados, doenca, g, nomeSel, serieMun }: Ctx): 
   };
 
   const cobertura: Relatorio = {
-    id: "cobertura",
-    titulo: `Cobertura genômica observável no GenBank por município (dengue)`,
+    id: "cobertura", porAgravo: true,
+    titulo: `Cobertura genômica observável no GenBank por município (${agrMin})`,
     descricao: "Sequências depositadas no GenBank com município de coleta, divididas pelos casos notificados no trimestre.",
     fonte: `${FONTE_GENBANK} e ${FONTE_INFODENGUE}`,
     colunas: [
@@ -83,20 +87,21 @@ export function montarRelatorios({ dados, doenca, g, nomeSel, serieMun }: Ctx): 
     linhas: [...r.cobertura_municipal_trimestre].sort((a, b) => nome(a.g).localeCompare(nome(b.g), "pt-BR"))
       .map((x) => [x.g, nome(x.g), x.p, x.num, x.den, x.v, x.mot]),
     notas: [
-      "Zero quer dizer zero sequência pública com aquele município, não falta de sequenciamento: nenhuma sequência ingerida traz município de coleta.",
-      "Só dengue: o VigiGen ainda não ingere sequências de chikungunya e Zika.",
+      ...notaGen,
+      "Zero quer dizer zero sequência pública com aquele município, não falta de sequenciamento.",
+      `Numerador e denominador do mesmo agravo (${agrMin}): sequências de ${SIGLA_VIRUS[doenca]} e casos notificados de ${agrMin}.`,
     ],
   };
 
   const oport = r.indicadores.filter((x) => x.t.startsWith("oportunidade_mediana_dias:"))
     .sort((a, b) => a.nivel.localeCompare(b.nivel) || b.p.localeCompare(a.p) || a.t.localeCompare(b.t));
   const oportunidade: Relatorio = {
-    id: "oportunidade",
-    titulo: "Oportunidade: dias entre a coleta e o depósito no GenBank",
-    descricao: "Mediana e quartis por ano de coleta e sorotipo, no Brasil e no RN.",
+    id: "oportunidade", porAgravo: true,
+    titulo: `Oportunidade (${agrMin}): dias entre a coleta e o depósito no GenBank`,
+    descricao: doenca === "dengue" ? "Mediana e quartis por ano de coleta e sorotipo, no Brasil e no RN." : "Mediana e quartis por ano de coleta, no Brasil e no RN.",
     fonte: FONTE_GENBANK,
     colunas: [
-      { r: "Nível" }, { r: "Ano de coleta" }, { r: "Sorotipo" }, { r: "Mediana (dias)", tipo: "num" },
+      { r: "Nível" }, { r: "Ano de coleta" }, { r: doenca === "dengue" ? "Sorotipo" : "Grupo" }, { r: "Mediana (dias)", tipo: "num" },
       { r: "P25 (dias)", tipo: "num" }, { r: "P75 (dias)", tipo: "num" }, { r: "Sequências", tipo: "num" }, { r: "Calculado em" },
     ],
     linhas: oport.map((x) => [
@@ -104,13 +109,14 @@ export function montarRelatorios({ dados, doenca, g, nomeSel, serieMun }: Ctx): 
       (x.d.p25 as number) ?? null, (x.d.p75 as number) ?? null, (x.d.n as number) ?? x.den, fmtDataHora(x.em),
     ]),
     notas: [
+      ...notaGen,
       "Só coletas com data completa (dia, mês e ano). Data de disponibilidade: criação do registro no GenBank (GBSeq_create-date).",
     ],
   };
 
   const seqRn: Relatorio = {
-    id: "sequencias_rn",
-    titulo: "Sequências de dengue do RN no GenBank",
+    id: "sequencias_rn", porAgravo: true,
+    titulo: `Sequências de ${agrMin} do RN no GenBank`,
     descricao: "Cada sequência atribuída ao Rio Grande do Norte, com acesso, sorotipo e datas.",
     fonte: FONTE_GENBANK,
     colunas: [
@@ -118,26 +124,34 @@ export function montarRelatorios({ dados, doenca, g, nomeSel, serieMun }: Ctx): 
       { r: "Tamanho (nt)", tipo: "num" }, { r: "Atribuída pelo nome da cepa" }, { r: "Título" },
     ],
     linhas: r.sequencias_rn.map((s) => [s.acc, s.soro, s.coleta, s.pub, s.geo, s.nt, s.por_nome ? "sim" : "não", s.titulo]),
-    notas: ["Nenhuma traz município de coleta; por isso contam só no nível estadual."],
+    notas: [...notaGen, "Sequências sem município de coleta contam só no nível estadual."],
   };
 
-  const composicao: Relatorio = {
-    id: "composicao",
-    titulo: "Sorotipos informados nos metadados das sequências brasileiras, por ano",
+  const composicao: Relatorio = doenca === "dengue" ? {
+    id: "composicao", porAgravo: true,
+    titulo: "Sorotipos informados nos metadados das sequências brasileiras de dengue, por ano",
     descricao: "Contagem de sequências por ano de coleta e sorotipo declarado.",
     fonte: FONTE_GENBANK,
     colunas: [{ r: "Ano de coleta" }, { r: "Sorotipo" }, { r: "Sequências", tipo: "num" }],
     linhas: [...r.composicao_brasil].sort((a, b) => b.a - a.a || a.s.localeCompare(b.s)).map((x) => [x.a, x.s, x.n]),
     notas: ["Os percentuais representam as sequências disponíveis e não a prevalência dos sorotipos na população brasileira."],
+  } : {
+    id: "composicao", porAgravo: true,
+    titulo: `Sequências de ${agrMin} do Brasil no GenBank, por ano de coleta`,
+    descricao: "Contagem de sequências por ano de coleta, no Brasil e no RN.",
+    fonte: FONTE_GENBANK,
+    colunas: [{ r: "Ano de coleta" }, { r: "Sequências do Brasil", tipo: "num" }, { r: "Do RN", tipo: "num" }],
+    linhas: [...r.por_ano_brasil].sort((a, b) => b.a - a.a).map((x) => [x.a, x.n, x.rn]),
+    notas: [...notaGen, "Os números representam as sequências disponíveis, não a circulação do vírus na população."],
   };
 
   const alertas: Relatorio = {
-    id: "alertas",
-    titulo: "Alertas de mudança no perfil genômico",
+    id: "alertas", porAgravo: true,
+    titulo: `Alertas de mudança no perfil genômico (${agrMin})`,
     descricao: "Alertas gravados pelas regras de detecção e o estado de revisão de cada um.",
     fonte: "VigiGen (regras R1, R2 e R3 sobre a classificação Nextclade)",
     colunas: [{ r: "Território" }, { r: "Regra" }, { r: "Trimestre" }, { r: "Status" }, { r: "Criado em" }, { r: "Revisado em" }],
-    linhas: r.alertas.map((a) => [nome(a.g), a.tipo, a.p, STATUS_ALERTA[a.status] ?? a.status, fmtDataHora(a.criado), a.rev ? fmtDataHora(a.rev) : null]),
+    linhas: r.alertas.filter((a) => (a.a ?? "dengue") === doenca).map((a) => [nome(a.g), a.tipo, a.p, STATUS_ALERTA[a.status] ?? a.status, fmtDataHora(a.criado), a.rev ? fmtDataHora(a.rev) : null]),
     notas: ["Nenhum alerta se confirma sozinho: todo alerta passa por revisão humana."],
   };
 

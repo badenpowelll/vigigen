@@ -3,6 +3,7 @@ import type { Ctx } from "./ctx";
 import { Alternador, Nota, Secao } from "../componentes/basicos";
 import { Mapa, TabelaMapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
 import { DOENCA_ROTULO, fmtData, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
+import { genomicaDe, motivoSemGenomica } from "../dados/calc";
 
 type Camada = "incidencia" | "casos" | "cobertura";
 
@@ -10,7 +11,9 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
   const [camada, setCamada] = useState<Camada>("incidencia");
   const [verTabela, setVerTabela] = useState(false);
   const sem = dados.semana[doenca];
-  const cobMun = dados.resumo?.cobertura_municipal_trimestre ?? [];
+  const gen = useMemo(() => genomicaDe(dados.resumo, doenca), [dados.resumo, doenca]);
+  const agr = DOENCA_ROTULO[doenca].toLowerCase();
+  const cobMun = gen.r?.cobertura_municipal_trimestre ?? [];
   const nomes = useMemo(() => new Map((dados.malha?.features ?? []).map((f) => [f.properties.g, f.properties.n])), [dados.malha]);
 
   const { valores, unidade, formatar, periodo } = useMemo(() => {
@@ -51,16 +54,16 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
     }
     return c;
   }, [camada, nomes, cobMun]);
-  const gb = dados.resumo?.genbank;
-  const rnSeq = dados.resumo?.sequencias_rn ?? [];
+  const gb = gen.estado === "ok" ? gen.r?.genbank : undefined;
+  const rnSeq = gen.r?.sequencias_rn ?? [];
   const rnSemMun = rnSeq.filter((x) => !x.por_nome);
-  const ultimoAnoColeta = Math.max(...(dados.resumo?.por_ano_brasil ?? []).map((x) => x.a));
-  const consultaGb = dados.resumo?.fontes?.genbank?.finalizado_em;
+  const ultimoAnoColeta = Math.max(...(gen.r?.por_ano_brasil ?? []).map((x) => x.a));
+  const consultaGb = gen.consultaEm;
 
   return (
     <Secao titulo="Mapa de calor do Rio Grande do Norte"
       subtitulo={camada === "cobertura"
-        ? `Cobertura genômica observável no GenBank (dengue) · ${periodo} · consulta ao GenBank em ${fmtData(consultaGb)}`
+        ? `Cobertura genômica observável no GenBank (${agr}) · ${periodo} · consulta ao GenBank em ${fmtData(consultaGb)}`
         : `${DOENCA_ROTULO[doenca]} · ${periodo}`}
       acoes={<>
         <Alternador rotulo="Camada do mapa" valor={camada} aoMudar={setCamada}
@@ -69,11 +72,8 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
           {verTabela ? "Ver mapa" : "Ver como tabela"}
         </button>
       </>}>
-      {camada === "cobertura" && doenca !== "dengue" && (
-        <div className="mb-3"><Nota tipo="aviso">
-          Esta camada é só de dengue. A base não tem sequências de {DOENCA_ROTULO[doenca].toLowerCase()}: o VigiGen ainda não as
-          baixa do GenBank. Os percentuais abaixo são de dengue.
-        </Nota></div>
+      {camada === "cobertura" && gen.estado !== "ok" && (
+        <div className="mb-3"><Nota tipo="aviso">{motivoSemGenomica(doenca, gen.estado)}</Nota></div>
       )}
       {todosZero && (
         <div className="mb-3"><Nota tipo="aviso">
@@ -108,7 +108,7 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
         <div className="mt-4 rounded-[var(--raio)] border border-borda p-3 text-sm">
           <p className="rotulo">Nível estadual · o que a base genômica permite ver</p>
           <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
-            <li>{fmtNum(gb.rn)} sequência(s) de dengue do RN em toda a base, e {fmtNum(rnSemMun.filter((x) => x.geo).length)} delas só com o estado no local de origem
+            <li>{fmtNum(gb.rn)} sequência(s) de {agr} do RN em toda a base, e {fmtNum(rnSemMun.filter((x) => x.geo).length)} delas só com o estado no local de origem
               {rnSemMun.length > 0 && <> ({rnSemMun.map((x) => `${x.acc}, coleta ${x.coleta ?? "sem data"}`).join("; ")})</>}.</li>
             <li>Ano de coleta mais recente entre as {fmtNum(gb.total)} sequências brasileiras: {Number.isFinite(ultimoAnoColeta) ? ultimoAnoColeta : "sem dado"}.</li>
             <li>Coletas com só o ano informado não entram no cálculo trimestral; a oportunidade usa só coletas com dia.</li>
@@ -118,7 +118,7 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
       <p className="mt-3 text-xs text-suave">
         Malha: IBGE, limites municipais {dados.malha?.ano_referencia ?? ""} (geometria simplificada para exibição).
         Classes por quantis dos valores positivos; a hachura marca município sem dado, que não é o mesmo que zero.
-        {camada === "cobertura" && ` Cobertura observável = sequências de dengue no GenBank com coleta no trimestre e município identificado ÷ casos notificados de dengue (InfoDengue) no mesmo trimestre e município. Valor em %: ${fmtPct(0.0001, 2)} equivale a 1 sequência a cada 10 mil casos. Mede o que está depositado e identificável na base pública, não o sequenciamento realizado pelos laboratórios, e não é representativa da circulação viral.`}
+        {camada === "cobertura" && ` Cobertura observável = sequências de ${agr} no GenBank com coleta no trimestre e município identificado ÷ casos notificados de ${agr} (InfoDengue) no mesmo trimestre e município. Valor em %: ${fmtPct(0.0001, 2)} equivale a 1 sequência a cada 10 mil casos. Mede o que está depositado e identificável na base pública, não o sequenciamento realizado pelos laboratórios, e não é representativa da circulação viral.`}
       </p>
     </Secao>
   );

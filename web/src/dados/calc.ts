@@ -1,5 +1,5 @@
 // Contas derivadas do dado do banco. Só agregações transparentes; nada estimado aqui.
-import type { Indicador, MunicipioSemana, Resumo, Semana, Serie } from "./tipos";
+import type { Doenca, Indicador, MunicipioSemana, Resumo, Semana, Serie } from "./tipos";
 import { trimestreDe } from "../util";
 
 export interface Agregado {
@@ -54,3 +54,53 @@ export const seParaData = (se: number) => {
   const ano = Math.floor(se / 100), sem = se % 100;
   return new Date(Date.UTC(ano, 0, 1 + (sem - 1) * 7));
 };
+
+// ---------- camada genômica por agravo ----------
+
+export type EstadoGenomico = "ok" | "nao_ingerido" | "vazio";
+
+/** Limiar histórico de dengue (9.000 nt), usado só quando o banco não informa o do agravo. */
+const LIMIAR_DENGUE_LEGADO = 9000;
+
+/**
+ * O resumo com os campos genômicos trocados pelos do agravo escolhido.
+ * Nunca usa dado de outro vírus: sem bloco do agravo, devolve estado
+ * "nao_ingerido" e listas vazias.
+ */
+export function genomicaDe(r: Resumo | null, doenca: Doenca): {
+  r: Resumo | null; estado: EstadoGenomico; limiar: number | null; criterioLimiar: string | null;
+  termo: string | null; consultaEm: string | null; classificacao: string | null;
+} {
+  if (!r) return { r: null, estado: "nao_ingerido", limiar: null, criterioLimiar: null, termo: null, consultaEm: null, classificacao: null };
+  const g = r.genomica?.[doenca];
+  if (g) {
+    const estado: EstadoGenomico = g.genbank.total > 0 ? "ok" : g.fonte ? "vazio" : "nao_ingerido";
+    return {
+      r: { ...r, genbank: g.genbank, sequencias_rn: g.sequencias_rn, composicao_brasil: g.composicao_brasil,
+           por_ano_brasil: g.por_ano_brasil, indicadores: g.indicadores,
+           cobertura_municipal_trimestre: g.cobertura_municipal_trimestre },
+      estado, limiar: g.config?.limiar ?? null, criterioLimiar: g.config?.criterio_limiar ?? null,
+      termo: g.config?.termo ?? g.genbank.termo, consultaEm: g.fonte?.finalizado_em ?? null,
+      classificacao: g.config?.classificacao ?? null,
+    };
+  }
+  if (doenca === "dengue") {
+    return { r, estado: r.genbank.total > 0 ? "ok" : "nao_ingerido", limiar: LIMIAR_DENGUE_LEGADO,
+             criterioLimiar: "limiar histórico do projeto", termo: r.genbank.termo,
+             consultaEm: r.fontes?.genbank?.finalizado_em ?? null, classificacao: null };
+  }
+  const vazio: Resumo = { ...r, genbank: { total: 0, rn: 0, rn_por_nome_cepa: 0, brasil_sem_estado: 0, sem_geo: 0, genoma_quase_completo: 0, por_sorotipo: {}, termo: "" },
+    sequencias_rn: [], composicao_brasil: [], por_ano_brasil: [], indicadores: [], cobertura_municipal_trimestre: [] };
+  return { r: vazio, estado: "nao_ingerido", limiar: null, criterioLimiar: null, termo: null, consultaEm: null, classificacao: null };
+}
+
+export const SIGLA_VIRUS: Record<Doenca, string> = { dengue: "DENV", chikungunya: "CHIKV", zika: "ZIKV" };
+export const NOME_VIRUS: Record<Doenca, string> = { dengue: "Dengue virus", chikungunya: "Chikungunya virus", zika: "Zika virus" };
+
+/** Frase única para quando o agravo não tem dado genômico, com o motivo. */
+export function motivoSemGenomica(doenca: Doenca, estado: EstadoGenomico): string {
+  const v = `${NOME_VIRUS[doenca]} (${SIGLA_VIRUS[doenca]})`;
+  return estado === "vazio"
+    ? `A consulta ao GenBank para ${v} rodou e não trouxe nenhuma sequência do Brasil. Isto é zero na fonte, não falha.`
+    : `As sequências de ${v} ainda não foram ingeridas do GenBank neste banco. Nenhum número de dengue é mostrado no lugar.`;
+}

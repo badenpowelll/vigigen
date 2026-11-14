@@ -4,7 +4,7 @@ import { FONTE_GENBANK, FONTE_INFODENGUE } from "./ctx";
 import { KpiCard, Secao, StatusBadge, IconeNivel, Nota, type Nivel } from "../componentes/basicos";
 import { Mapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
 import { GraficoLinhas } from "../componentes/Graficos";
-import { agregarEstado, coberturaMunicipio, posicao, ultimos, valorNaSE } from "../dados/calc";
+import { agregarEstado, coberturaMunicipio, genomicaDe, posicao, ultimos, valorNaSE } from "../dados/calc";
 import { ult12Retrato } from "../dados/useDados";
 import { DOENCA_ROTULO, COR_DOENCA, fmtData, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
 
@@ -22,7 +22,8 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
   const cAnt = valorNaSE(serie, sem?.se_anterior ?? null, "c");
   const spark = serie ? ultimos(serie.c, 12) : g !== null ? ult12Retrato(g, doenca) : null;
   const rank = g !== null ? posicao(sem, g, "i") : null;
-  const cob = coberturaMunicipio(dados.resumo, g);
+  const gen = genomicaDe(dados.resumo, doenca);
+  const cob = gen.estado === "ok" ? coberturaMunicipio(gen.r, g) : null;
   const r = dados.resumo!;
   const alertasAqui = r.alertas.filter((a) => g === null || a.g === g);
 
@@ -78,8 +79,8 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
         <KpiCard titulo="Cobertura de sequenciamento" periodo={cob ? fmtTrimestre(cob.p) : "último trimestre"}
           fonte={{ nome: `${FONTE_GENBANK} + InfoDengue`, atualizado: "calculado pelo VigiGen" }}
           valor={cob && cob.v !== null ? fmtPct(cob.v, 2) : null}
-          semDadoMotivo={cob ? cob.mot ?? undefined : "indicador ainda não calculado"}
-          rodapeExtra={cob ? `${fmtNum(cob.num)} sequência(s) / ${fmtNum(cob.den)} casos de dengue` : undefined} />
+          semDadoMotivo={cob ? cob.mot ?? undefined : gen.estado !== "ok" ? `sequências de ${DOENCA_ROTULO[doenca].toLowerCase()} ainda não ingeridas do GenBank` : "indicador ainda não calculado"}
+          rodapeExtra={cob ? `${fmtNum(cob.num)} sequência(s) / ${fmtNum(cob.den)} casos de ${DOENCA_ROTULO[doenca].toLowerCase()}` : undefined} />
         <KpiCard titulo="Alertas de mudança de linhagem" periodo="Fase 1" fonte={{ nome: "VigiGen (Nextclade)", atualizado: `${fmtNum(r.classificacao.total)} sequências classificadas` }}
           valor={r.classificacao.total === 0 ? null : fmtNum(alertasAqui.length)}
           semDadoMotivo="a classificação por Nextclade ainda não rodou; sem ela não há como detectar mudança de linhagem (isto não é zero)"

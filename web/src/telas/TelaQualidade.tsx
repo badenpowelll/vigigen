@@ -2,11 +2,14 @@ import type { Ctx } from "./ctx";
 import { FONTE_GENBANK } from "./ctx";
 import { KpiCard, Nota, Secao } from "../componentes/basicos";
 import { COR_SOROTIPO, DOENCA_ROTULO, fmtData, fmtNum, fmtPct, fmtTrimestre } from "../util";
+import { SIGLA_VIRUS, genomicaDe, motivoSemGenomica } from "../dados/calc";
 
 export function TelaQualidade({ dados, doenca }: Ctx) {
-  const r = dados.resumo!;
+  const gen = genomicaDe(dados.resumo, doenca);
+  const r = gen.r!;
   const gb = r.genbank;
-  const fonteGb = { nome: FONTE_GENBANK, atualizado: `lido em ${fmtData(r.fontes?.genbank?.finalizado_em)}` };
+  const agr = DOENCA_ROTULO[doenca].toLowerCase();
+  const fonteGb = { nome: FONTE_GENBANK, atualizado: `consulta em ${fmtData(gen.consultaEm)}` };
   const oport = r.indicadores.filter((x) => x.t.startsWith("oportunidade_mediana_dias:") && x.nivel === "pais")
     .sort((a, b) => b.p.localeCompare(a.p));
   const anosOport = [...new Set(oport.map((x) => x.p))].slice(0, 6);
@@ -17,15 +20,14 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
 
   return (
     <div className="flex flex-col gap-4">
-      {doenca !== "dengue" && (
-        <Nota tipo="aviso">
-          Esta aba mostra só dengue. O VigiGen ainda não ingere sequências de {DOENCA_ROTULO[doenca].toLowerCase()} do
-          GenBank (a consulta atual é "Dengue virus"), então não há qualidade genômica a mostrar para esse agravo.
-          Os números abaixo são de dengue.
-        </Nota>
-      )}
+      <p className="text-sm text-suave">
+        Qualidade genômica de <strong className="text-texto">{DOENCA_ROTULO[doenca]} ({SIGLA_VIRUS[doenca]})</strong>
+        {gen.termo ? <> · consulta ao GenBank: <span className="font-mono text-xs">{gen.termo}</span></> : null}
+      </p>
+      {gen.estado !== "ok" && <Nota tipo="aviso">{motivoSemGenomica(doenca, gen.estado)}</Nota>}
+      {gen.estado === "ok" && <>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard titulo="Sequências de dengue do Brasil" periodo="todo o histórico" fonte={fonteGb} valor={fmtNum(gb.total)}
+        <KpiCard titulo={`Sequências de ${agr} do Brasil`} periodo="todo o histórico" fonte={fonteGb} valor={fmtNum(gb.total)}
           rodapeExtra={`termo: ${gb.termo}`} />
         <KpiCard titulo="Sem estado de origem" periodo="todo o histórico" fonte={fonteGb}
           valor={gb.total ? fmtPct(gb.brasil_sem_estado / gb.total) : null}
@@ -33,7 +35,7 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
         <KpiCard titulo="Sequências do RN" periodo="todo o histórico" fonte={fonteGb} valor={fmtNum(gb.rn)}
           rodapeExtra={`+ ${gb.rn_por_nome_cepa} com "/RN/" no nome da cepa (contadas à parte)`} />
         <KpiCard titulo="Genoma quase completo" periodo="todo o histórico" fonte={fonteGb}
-          valor={gb.total ? fmtPct(gb.genoma_quase_completo / gb.total) : null} rodapeExtra="≥ 9.000 nt; o restante são genes parciais (E, NS1, C-prM)" />
+          valor={gb.total ? fmtPct(gb.genoma_quase_completo / gb.total) : null} rodapeExtra={`≥ ${fmtNum(gen.limiar)} nt${gen.criterioLimiar ? ` (${gen.criterioLimiar})` : ""}; o restante são genes parciais`} />
       </div>
 
       <Secao titulo="Oportunidade: dias entre a coleta e a publicação no GenBank" subtitulo="Mediana (P25–P75) por ano de coleta, sequências do Brasil com data de coleta exata">
@@ -59,7 +61,7 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
         <p className="mt-2 text-xs text-suave">Disponibilidade = data de criação do registro (create-date), que é quando a sequência ficou pública. Coletas com só o ano ou o mês ficam de fora para não inventar dia.</p>
       </Secao>
 
-      <Secao titulo="Cobertura de sequenciamento no RN, por ano" subtitulo="Sequências do RN com coleta no ano ÷ casos notificados de dengue no RN">
+      <Secao titulo="Cobertura de sequenciamento no RN, por ano" subtitulo={`Sequências de ${agr} do RN com coleta no ano ÷ casos notificados de ${agr} no RN`}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead><tr className="text-left"><th className="py-1 pr-3">Ano</th><th className="py-1 pr-3 text-right">Sequências</th><th className="py-1 pr-3 text-right">Casos</th><th className="py-1 text-right">Cobertura</th></tr></thead>
@@ -78,14 +80,15 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
       </Secao>
 
       <Secao titulo="Sequências do Rio Grande do Norte no GenBank" subtitulo="Todas as encontradas, com o texto de origem como foi depositado">
+        {r.sequencias_rn.length === 0 ? <Nota>Nenhuma sequência de {agr} do Brasil no GenBank cita o RN na origem.</Nota> : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="text-left"><th className="py-1 pr-3">Accession</th><th className="py-1 pr-3">Sorotipo</th><th className="py-1 pr-3">Coleta</th><th className="py-1 pr-3">Origem declarada</th><th className="py-1 pr-3 text-right">nt</th><th className="py-1">Critério</th></tr></thead>
+            <thead><tr className="text-left"><th className="py-1 pr-3">Accession</th>{doenca === "dengue" && <th className="py-1 pr-3">Sorotipo</th>}<th className="py-1 pr-3">Coleta</th><th className="py-1 pr-3">Origem declarada</th><th className="py-1 pr-3 text-right">nt</th><th className="py-1">Critério</th></tr></thead>
             <tbody>
               {r.sequencias_rn.map((s) => (
                 <tr key={s.acc} className="border-t border-borda">
                   <td className="py-1 pr-3"><a className="font-mono underline" href={`https://www.ncbi.nlm.nih.gov/nuccore/${s.acc}`} target="_blank" rel="noreferrer">{s.acc}</a></td>
-                  <td className="py-1 pr-3">{s.soro ?? "não declarado"}</td>
+                  {doenca === "dengue" && <td className="py-1 pr-3">{s.soro ?? "não declarado"}</td>}
                   <td className="num py-1 pr-3">{s.coleta ?? "—"}</td>
                   <td className="py-1 pr-3">{s.geo ?? "—"}</td>
                   <td className="num py-1 pr-3 text-right">{fmtNum(s.nt)}</td>
@@ -94,13 +97,14 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
               ))}
             </tbody>
           </table>
-        </div>
+        </div>)}
       </Secao>
+      </>}
 
       <Secao titulo="Exclusões no controle de qualidade">
         {Object.keys(r.exclusoes_qc).length
           ? <ul className="text-sm">{Object.entries(r.exclusoes_qc).map(([k, v]) => <li key={k}>{k}: {fmtNum(v)}</li>)}</ul>
-          : <Nota>Sem dado para este período: o controle de qualidade roda junto com o Nextclade, que ainda não foi executado.</Nota>}
+          : <Nota>Sem dado para este período: o controle de qualidade roda junto com o Nextclade, que ainda não foi executado.{doenca !== "dengue" ? ` Para ${agr}, a classificação ainda não está definida: ${gen.classificacao ?? "o dataset Nextclade precisa ser verificado antes"}.` : ""}</Nota>}
       </Secao>
     </div>
   );

@@ -2,24 +2,35 @@ import { useState } from "react";
 import type { Ctx } from "./ctx";
 import { Nota, Secao } from "../componentes/basicos";
 import { revisarAlerta, supabase } from "../dados/supabase";
-import { fmtDataHora, fmtNum } from "../util";
+import { DOENCA_ROTULO, fmtDataHora, fmtNum } from "../util";
+import { SIGLA_VIRUS, genomicaDe } from "../dados/calc";
 
 const STATUS: Record<string, string> = { novo: "Novo, aguardando revisão", em_analise: "Em análise", confirmado: "Confirmado por revisor", descartado: "Descartado por revisor" };
 
-export function TelaAlertas({ dados, g, nomeSel }: Ctx) {
+export function TelaAlertas({ dados, g, nomeSel, doenca }: Ctx) {
   const r = dados.resumo!;
-  const lista = r.alertas.filter((a) => g === null || a.g === g);
+  const gen = genomicaDe(r, doenca);
+  const agr = DOENCA_ROTULO[doenca].toLowerCase();
+  // alertas antigos (antes da migração 013) não têm agravo e são de dengue
+  const lista = r.alertas.filter((a) => (a.a ?? "dengue") === doenca && (g === null || a.g === g));
   const [erro, setErro] = useState<string | null>(null);
   const podeRevisar = dados.origem === "supabase" && !!supabase;
 
   return (
     <div className="flex flex-col gap-4">
-      <Secao titulo={`Alertas de mudança de perfil de linhagem · ${nomeSel}`} subtitulo="Cada alerta precisa de revisão humana. Nenhum alerta se confirma sozinho.">
-        {r.classificacao.total === 0 ? (
+      <Secao titulo={`Alertas de mudança de perfil de linhagem · ${DOENCA_ROTULO[doenca]} · ${nomeSel}`} subtitulo="Cada alerta precisa de revisão humana. Nenhum alerta se confirma sozinho.">
+        {doenca !== "dengue" && lista.length === 0 ? (
+          <Nota tipo="aviso">
+            Sem dado para {agr}: as regras R1, R2 e R3 rodam por vírus e dependem de classificação de genótipo ou linhagem.
+            Para {SIGLA_VIRUS[doenca]} ela ainda não está definida ({gen.classificacao ?? "o dataset Nextclade precisa ser verificado"}).
+            {gen.estado === "ok" ? ` Há ${fmtNum(gen.r?.genbank.total)} sequências de ${agr} ingeridas, ainda sem classificação.` : " As sequências deste vírus ainda não foram ingeridas do GenBank."}
+            {" "}A ausência de alertas aqui não significa ausência de mudança.
+          </Nota>
+        ) : r.classificacao.total === 0 ? (
           <div className="flex flex-col gap-3">
             <Nota tipo="aviso">
               <strong>Sem dado para este período.</strong> Ainda não há alertas porque a detecção depende da classificação de
-              linhagem, e ela não rodou: {fmtNum(r.genbank.total)} sequências foram ingeridas e 0 foram classificadas pelo Nextclade.
+              linhagem, e ela não rodou: {fmtNum(gen.r?.genbank.total)} sequências de dengue foram ingeridas e 0 foram classificadas pelo Nextclade.
               A ausência de alertas aqui não significa ausência de mudança.
             </Nota>
             <div className="text-sm">

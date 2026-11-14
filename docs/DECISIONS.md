@@ -119,3 +119,43 @@ Awesome), o seletor de território segue as medidas do `br-input` (o
 4 px, `gold-vivid-40`) e o rodapé segue o `br-footer` (fundo
 `blue-warm-vivid-90`). No escuro, as variáveis equivalem à classe
 `dark-mode` do DS.
+
+## D-015 — Camada genômica multiagravo (14/11/2026)
+
+**Contexto.** O seletor de agravo do painel trocava os dados do InfoDengue,
+mas a camada genômica só tinha dengue: na aba Qualidade do dado,
+chikungunya e Zika mostravam números de dengue. Baden pediu a integração
+real de CHIKV e ZIKV pelo mesmo caminho do GenBank.
+
+**Decisão.**
+- Um termo por agravo no esearch, validados em 14/11/2026 15:24 UTC (resposta
+  em `data/raw/genbank/`): `"Dengue virus"[Organism] AND Brazil[All Fields]`
+  (7.203), `"Chikungunya virus"[Organism] AND Brazil[All Fields]` (1.839),
+  `"Zika virus"[Organism] AND Brazil[All Fields]` (519).
+- `sequencia.agravo` é coluna gerada a partir de `GBSeq_organism`
+  (`app.agravo_de`). Nenhum outro campo decide o vírus. Sorotipo DENV-1..4 só
+  é gravado para dengue (gatilho `sequencia_sorotipo_so_dengue`).
+- `indicador` e `alerta` ganham `agravo` (default `dengue` para o legado). A
+  chave única do indicador passa a incluir o agravo. `calcular_indicadores()`
+  roda um agravo por vez, com casos do mesmo agravo no denominador; agravo sem
+  sequência não grava indicador (o painel mostra "sem dado", não zero).
+- Genoma quase completo por referência RefSeq conferida por esummary:
+  NC_001477.1 (DENV-1, 10.735 nt), NC_004162.2 (CHIKV, 11.826 nt),
+  NC_012532.1 (ZIKV, 10.794 nt). Dengue mantém 9.000 nt; CHIKV (9.914 nt) e
+  ZIKV (9.046 nt) usam a mesma fração (83,8%) como critério **provisório**, a
+  validar cientificamente.
+- Nextclade continua só para dengue: `exportar-fasta` e `detectar-alertas`
+  filtram dengue. Classificação de CHIKV e ZIKV fica pendente até verificar
+  os datasets (o índice data.clades.nextstrain.org não é alcançável deste
+  ambiente). Alertas R1–R3 de CHIKV/ZIKV ficam indisponíveis até lá.
+- Ingestão: `ingest-genbank` aceita `{"agravo": ...}`; a carga incremental usa
+  a última carga do mesmo termo (a primeira de um agravo novo é completa).
+  Três agendamentos diários (10:00 dengue, 11:20 chikungunya, 12:40 Zika UTC).
+  Uma execução por vez: disparo com outra em andamento responde 409.
+- Painel: `painel_resumo()` mantém as chaves antigas só com dengue e ganha
+  `genomica.{dengue,chikungunya,zika}` (`painel_genomica`). Todas as abas
+  leem o bloco do agravo escolhido; sem bloco, a tela diz o motivo.
+
+**Estado.** Código e migração 013 na PR #2, testados num Postgres local
+(`tests/fixtures/sql/FIXTURE_teste_013.sql`). Nada aplicado em produção até autorização do
+Baden: aplicar a 013, publicar a Edge Function e disparar a primeira carga.

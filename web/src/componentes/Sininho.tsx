@@ -2,7 +2,7 @@
 // esperam revisão humana (novo ou em análise). Sem alerta, sem número.
 import { useEffect, useRef, useState } from "react";
 import type { Alerta } from "../dados/tipos";
-import { fmtDataHora, fmtTrimestre } from "../util";
+import { DOENCA_ROTULO, fmtDataHora, fmtTrimestre } from "../util";
 
 const PENDENTE = new Set(["novo", "em_analise"]);
 const STATUS: Record<string, string> = { novo: "Novo", em_analise: "Em análise" };
@@ -55,7 +55,7 @@ export function Sininho({ alertas, nomes, aoAbrir }: {
             <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto">
               {pendentes.slice(0, 8).map((a) => (
                 <li key={a.id} className="border-b border-borda pb-2 last:border-0">
-                  <span className="font-semibold">{nome(a.g)}</span> · {a.tipo} · {fmtTrimestre(a.p)}
+                  <span className="font-semibold">{nome(a.g)}</span> · {DOENCA_ROTULO[a.a ?? "dengue"]} · {a.tipo} · {fmtTrimestre(a.p)}
                   <span className="block text-xs text-suave">{STATUS[a.status]} · criado em {fmtDataHora(a.criado)}</span>
                 </li>
               ))}

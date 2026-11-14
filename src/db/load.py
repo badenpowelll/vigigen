@@ -31,7 +31,9 @@ def exportar_fasta(destino: Path) -> int:
     n = 0
     with conectar() as con, destino.open("w", encoding="utf-8") as f:
         for acc, seq in con.execute(
-                "select accession, sequencia_fasta from public.sequencia where sequencia_fasta is not null order by accession"):
+                "select accession, sequencia_fasta from public.sequencia where sequencia_fasta is not null"
+                " and organismo ~* '^\\s*dengue virus' order by accession"):
+            # só dengue: os datasets Nextclade do workflow são de DENV (D-013, D-015)
             corpo = seq if seq.startswith(">") else f">{acc}\n{seq}\n"
             f.write(corpo if corpo.endswith("\n") else corpo + "\n")
             n += 1
@@ -87,12 +89,17 @@ def detectar_alertas(relatorio: Path, inicio: str = "2020T1") -> dict:
             select s.geocodigo, app.trimestre(s.data_coleta_inicio), coalesce(c.linhagem, c.genotipo, c.sorotipo)
             from public.classificacao c join public.sequencia s using (accession)
             where s.uf_inferida = 'RN' and s.data_coleta_inicio is not null
+              and s.organismo ~* '^\\s*dengue virus'
               and coalesce(c.linhagem, c.genotipo, c.sorotipo) is not null""").fetchall()
         contagens = montar_contagens(linhas)
         cobertura: dict = {}
+        # depois da migração 013 o indicador tem agravo; antes dela, tudo é dengue
+        tem_agravo = con.execute("""select exists (select 1 from information_schema.columns
+            where table_schema = 'public' and table_name = 'indicador' and column_name = 'agravo')""").fetchone()[0]
+        filtro = " and agravo = 'dengue'" if tem_agravo else ""
         for geo, nivel, periodo, valor in con.execute("""
                 select geocodigo, nivel, periodo, valor from public.indicador
-                where tipo = 'cobertura_sequenciamento' and periodo like '____T_'"""):
+                where tipo = 'cobertura_sequenciamento' and periodo like '____T_'""" + filtro):
             terr = ESTADO if nivel == "estado" else str(geo)
             cobertura[(terr, periodo)] = float(valor) if valor is not None else None
         municipios = [str(g) for (g,) in con.execute("select geocodigo from public.municipio")]
