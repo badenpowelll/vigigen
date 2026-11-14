@@ -1,9 +1,9 @@
 import type { Ctx } from "./ctx";
 import { FONTE_GENBANK } from "./ctx";
 import { KpiCard, Nota, Secao } from "../componentes/basicos";
-import { COR_SOROTIPO, fmtData, fmtNum, fmtPct, fmtTrimestre } from "../util";
+import { COR_SOROTIPO, DOENCA_ROTULO, fmtData, fmtNum, fmtPct, fmtTrimestre } from "../util";
 
-export function TelaQualidade({ dados }: Ctx) {
+export function TelaQualidade({ dados, doenca }: Ctx) {
   const r = dados.resumo!;
   const gb = r.genbank;
   const fonteGb = { nome: FONTE_GENBANK, atualizado: `lido em ${fmtData(r.fontes?.genbank?.finalizado_em)}` };
@@ -17,6 +17,13 @@ export function TelaQualidade({ dados }: Ctx) {
 
   return (
     <div className="flex flex-col gap-4">
+      {doenca !== "dengue" && (
+        <Nota tipo="aviso">
+          Esta aba mostra só dengue. O VigiGen ainda não ingere sequências de {DOENCA_ROTULO[doenca].toLowerCase()} do
+          GenBank (a consulta atual é "Dengue virus"), então não há qualidade genômica a mostrar para esse agravo.
+          Os números abaixo são de dengue.
+        </Nota>
+      )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard titulo="Sequências de dengue do Brasil" periodo="todo o histórico" fonte={fonteGb} valor={fmtNum(gb.total)}
           rodapeExtra={`termo: ${gb.termo}`} />
