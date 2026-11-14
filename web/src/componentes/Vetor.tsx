@@ -19,7 +19,7 @@ export function Vetor() {
           <figcaption className="mt-1 text-sm">
             <strong><i>Aedes aegypti</i></strong> transmite dengue, chikungunya e Zika no Brasil; o <i>Aedes albopictus</i> tem papel
             secundário, ainda em estudo. Por isso o mapa separa os vírus por cor, não por mosquito.
-            {aedes && <span className="block text-xs text-suave">Foto: {aedes.credito} · {aedes.licenca} · <a href={aedes.origem} target="_blank" rel="noreferrer">origem</a></span>}
+            {aedes && <span className="block text-xs text-suave">Foto: {aedes.credito} · {aedes.licenca} · <a href={aedes.origem} target="_blank" rel="noreferrer" className="underline">origem</a></span>}
           </figcaption>
         </figure>
         <ul className="grid min-w-0 gap-3 sm:grid-cols-3">
@@ -30,7 +30,7 @@ export function Vetor() {
                 {f && <img src={f.src} alt={f.alt} className="mb-1 w-full rounded" loading="lazy" />}
                 <p className="text-sm font-bold">{v.nome}</p>
                 <p className="text-xs text-suave">{v.familia}; {v.nota}.</p>
-                {f && <p className="mt-1 text-[0.7rem] text-suave">Imagem: {f.credito} · {f.licenca} · <a href={f.origem} target="_blank" rel="noreferrer">origem</a></p>}
+                {f && <p className="mt-1 text-[0.7rem] text-suave">Imagem: {f.credito} · {f.licenca} · <a href={f.origem} target="_blank" rel="noreferrer" className="underline">origem</a></p>}
               </li>
             );
           })}
