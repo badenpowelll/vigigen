@@ -307,3 +307,23 @@ sustentar"), a partir da proposta do módulo de focos. Detalhes em `docs/FOCOS.m
   Fica vazia até o acordo com o LAIS/UFRN (PEP) ou a SESAP-RN (GAL).
 - **Nada em produção**: a migração 020 não foi aplicada e o workflow `focos.yml`
   só roda manualmente; o agendamento fica comentado até autorização do Baden.
+
+## D-023 — Análise automática por regras no painel, não por modelo de IA (14/11/2026)
+
+- **Pedido**: um bloco abaixo do mapa de calor que responda quais municípios
+  têm a maior incidência de cada vírus, que atuação dos gestores é sugerida e
+  outras perguntas pertinentes.
+- **Decisão**: regras fixas em `web/src/dados/analise.ts`, aplicadas aos dados
+  já carregados no painel (InfoDengue por município e semana; indicador
+  genômico do GenBank). O mesmo dado gera sempre o mesmo texto, e cada resposta
+  mostra a regra e a fonte ("Como foi calculado").
+- **Por quê**: o módulo de IA está fora do escopo da Fase 1 (CLAUDE.md), e um
+  texto reprodutível é avaliável no DSR; um modelo generativo exigiria backend,
+  registro de versão e avaliação próprios.
+- **Condutas**: sugestões ligadas a sinais nos dados (incidência no quartil
+  superior, alta semanal, Rt > 1 com probabilidade ≥ 90% e ≥ 5 casos, nível 3–4,
+  incidência alta com notificação parada), redigidas a partir dos eixos do
+  *Plano de contingência nacional para dengue, chikungunya e Zika* (MS,
+  SVSA/DEDT/CGARB, 2025). Não descrevem o que a gestão fez (não há esse dado) e
+  não classificam o município nos estágios do plano, que dependem do canal
+  endêmico local, ainda não calculado pelo VigiGen.

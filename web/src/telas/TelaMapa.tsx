@@ -4,12 +4,13 @@ import { Alternador, Nota, Secao } from "../componentes/basicos";
 import { Mapa, TabelaMapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
 import { DOENCAS, type Doenca } from "../dados/tipos";
 import { Vetor } from "../componentes/Vetor";
+import { AnaliseAutomatica } from "../componentes/AnaliseAutomatica";
 import { DOENCA_ROTULO, fmtData, fmtNum, fmtSE, fmtTrimestre } from "../util";
 import { genomicaDe, motivoSemGenomica } from "../dados/calc";
 
 type Camada = "incidencia" | "casos" | "cobertura";
 
-export function TelaMapa({ dados, doenca, g, setG, setDoenca }: Ctx) {
+export function TelaMapa({ dados, doenca, g, setG, setDoenca, irPara }: Ctx) {
   const [camada, setCamada] = useState<Camada>("incidencia");
   const [tres, setTres] = useState(false);
   const [verTabela, setVerTabela] = useState(false);
@@ -63,6 +64,7 @@ export function TelaMapa({ dados, doenca, g, setG, setDoenca }: Ctx) {
   const consultaGb = gen.consultaEm;
 
   return (
+    <div className="flex flex-col gap-4">
     <Secao titulo="Mapa de calor do Rio Grande do Norte"
       subtitulo={camada === "cobertura"
         ? `Razão de sequências públicas identificáveis por casos notificados (${agr}) · ${periodo} · consulta ao GenBank em ${fmtData(consultaGb)}`
@@ -151,6 +153,8 @@ export function TelaMapa({ dados, doenca, g, setG, setDoenca }: Ctx) {
         {camada === "cobertura" && ` Razão = sequências de ${agr} no GenBank com coleta no trimestre e município identificado ÷ casos notificados de ${agr} (InfoDengue) no mesmo trimestre e município, mostrada por 100 casos: 0,01 equivale a 1 sequência a cada 10 mil casos. Mede o que está depositado e identificável na base pública, não o sequenciamento realizado pelos laboratórios, e não é representativa da circulação viral.`}
       </p>
     </Secao>
+    <AnaliseAutomatica dados={dados} doenca={doenca} setG={setG} setDoenca={setDoenca} irPara={irPara} />
+    </div>
   );
 }
 
