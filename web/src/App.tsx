@@ -15,6 +15,9 @@ import { TelaRelatorios } from "./telas/TelaRelatorios";
 import { Sininho } from "./componentes/Sininho";
 import { Atalhos, SeletorTema } from "./componentes/Acessibilidade";
 import type { Ctx } from "./telas/ctx";
+import { TelaAdmin } from "./admin/TelaAdmin";
+import { sair, trocarSenha, type Perfil } from "./dados/auth";
+import { ligarTelemetria, registrar } from "./dados/telemetria";
 
 const ABAS = [
   { id: "visao", r: "Visão geral" },
@@ -25,17 +28,22 @@ const ABAS = [
   { id: "relatorios", r: "Relatórios" },
   { id: "sobre", r: "Fontes e método" },
   { id: "alertas", r: "Alertas" },
+  { id: "admin", r: "Administração" },
 ] as const;
 type Aba = (typeof ABAS)[number]["id"];
 
-function abaDoHash(): Aba {
+function abaDoHash(admin: boolean): Aba {
   const h = location.hash.replace("#", "");
-  return (ABAS.find((a) => a.id === h)?.id ?? "visao") as Aba;
+  const a = (ABAS.find((x) => x.id === h)?.id ?? "visao") as Aba;
+  return a === "admin" && !admin ? "visao" : a;
 }
 
-export default function App() {
+/** perfil: presente no painel web com login; null no artefato do claude.ai. */
+export default function App({ perfil = null }: { perfil?: Perfil | null }) {
   const dados = useDados();
-  const [aba, setAba] = useState<Aba>(abaDoHash);
+  const admin = !!perfil?.administrador;
+  const abas = ABAS.filter((a) => a.id !== "admin" || admin);
+  const [aba, setAba] = useState<Aba>(() => abaDoHash(admin));
   const [doenca, setDoenca] = useState<Doenca>("dengue");
   const [g, setG] = useState<number | null>(null);
   const [serieMun, setSerieMun] = useState<Serie | null>(null);
@@ -61,11 +69,12 @@ export default function App() {
   }, [g, doenca, dados.serieMunicipio, dados.origem]);
 
   useEffect(() => {
-    const f = () => setAba(abaDoHash());
+    const f = () => setAba(abaDoHash(admin));
     addEventListener("hashchange", f);
     return () => removeEventListener("hashchange", f);
-  }, []);
-  useEffect(() => { registrarUso(`aba:${aba}`); }, [aba]);
+  }, [admin]);
+  useEffect(() => { registrarUso(`aba:${aba}`); registrar("navegacao", `aba: ${ABAS.find((a) => a.id === aba)?.r}`); }, [aba]);
+  useEffect(ligarTelemetria, []);
 
   const irPara = (a: Aba) => { setAba(a); try { history.replaceState(null, "", `#${a}`); } catch { /* sandbox */ } };
   const conteudo = useRef<HTMLElement>(null);
@@ -76,9 +85,9 @@ export default function App() {
   useEffect(() => {
     const f = (e: KeyboardEvent) => {
       if (!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return;
-      const n = /^Digit([1-8])$/.exec(e.code);
-      if (n) {
-        const a = ABAS[Number(n[1]) - 1];
+      const n = /^Digit([1-9])$/.exec(e.code);
+      const a = n ? abas[Number(n[1]) - 1] : undefined;
+      if (a) {
         e.preventDefault(); irPara(a.id); setAnuncio(`Aba ${a.r}`);
         requestAnimationFrame(() => conteudo.current?.focus());
         return;
@@ -90,7 +99,8 @@ export default function App() {
     };
     addEventListener("keydown", f);
     return () => removeEventListener("keydown", f);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [admin]);
 
   const nomeSel = g === null ? "Rio Grande do Norte" : municipios.find((m) => m.g === g)?.n ?? "—";
   const ctx: Ctx = { dados, doenca, g, nomeSel, serieMun, setG: (x) => { setG(x); registrarUso("selecao_municipio"); }, irPara };
@@ -111,13 +121,14 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-2">
             <Origem {...dados} />
             <SeletorTema />
-            <Atalhos abas={ABAS.map((a) => a.r)} />
+            <Atalhos abas={abas.map((a) => a.r)} />
             <Sininho alertas={dados.resumo?.alertas ?? null} nomes={municipios} aoAbrir={() => irPara("alertas")} />
+            {perfil && <Conta perfil={perfil} />}
           </div>
         </div>
         <nav className="gutter mx-auto max-w-7xl overflow-x-auto border-t border-borda" aria-label="Seções do painel">
           <ul className="flex gap-1 whitespace-nowrap">
-            {ABAS.map((a) => (
+            {abas.map((a) => (
               <li key={a.id}>
                 <a href={`#${a.id}`} onClick={(e) => { e.preventDefault(); irPara(a.id); }}
                   aria-current={aba === a.id ? "page" : undefined}
@@ -131,7 +142,7 @@ export default function App() {
       </header>
 
       <div className="gutter mx-auto max-w-7xl py-4">
-        <section aria-label="Filtros do painel: território e agravo" className="mb-4 flex flex-wrap items-end gap-3">
+        <section aria-label="Filtros do painel: território e agravo" className={`mb-4 flex flex-wrap items-end gap-3 ${aba === "admin" ? "hidden" : ""}`}>
           <label className="flex min-w-0 flex-col gap-1">
             <span className="br-rotulo">Território</span>
             <select ref={seletorMun} value={g ?? ""} onChange={(e) => ctx.setG(e.target.value ? Number(e.target.value) : null)}
@@ -147,13 +158,19 @@ export default function App() {
           </div>
         </section>
 
-        {dados.aviso && <div className="mb-4"><Nota tipo="aviso">{dados.aviso}</Nota></div>}
-        {!dados.resumo && !dados.carregando && (
+        {dados.aviso && aba !== "admin" && <div className="mb-4"><Nota tipo="aviso">{dados.aviso}</Nota></div>}
+        {!dados.resumo && !dados.carregando && aba !== "admin" && (
           <Nota tipo="aviso">Sem dado para exibir: o painel não conseguiu ler o banco e este build não traz retrato embutido.</Nota>
         )}
-        {!dados.resumo && dados.carregando && <p className="text-suave">Lendo o banco do VigiGen…</p>}
+        {!dados.resumo && dados.carregando && aba !== "admin" && <p className="text-suave">Lendo o banco do VigiGen…</p>}
 
-        {dados.resumo && (
+        {aba === "admin" && admin && perfil && (
+          <main id="conteudo" ref={conteudo} tabIndex={-1} aria-label="Administração" className="outline-none focus-visible:outline-none">
+            <TelaAdmin meuId={perfil.user_id} />
+          </main>
+        )}
+
+        {dados.resumo && aba !== "admin" && (
           <main id="conteudo" ref={conteudo} tabIndex={-1} aria-label={`${ABAS.find((a) => a.id === aba)?.r} · ${DOENCA_ROTULO[doenca]} · ${nomeSel}`} className="outline-none focus-visible:outline-none">
             {aba === "visao" && <VisaoGeral {...ctx} />}
             {aba === "serie" && <TelaSerie {...ctx} />}
@@ -195,5 +212,35 @@ function Origem({ origem, lidoEm, carregando }: ReturnType<typeof useDados>) {
       <span className="font-semibold">{carregando && origem === "retrato" ? "Tentando dado ao vivo… " : ""}{texto}</span>
       {lidoEm && <span className="text-suave"> · {fmtDataHora(lidoEm)} ({haQuanto(lidoEm)})</span>}
     </div>
+  );
+}
+
+function Conta({ perfil }: { perfil: Perfil }) {
+  const [nova, setNova] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  return (
+    <details className="relative">
+      <summary className="cursor-pointer list-none rounded-pilula bg-white/10 px-3 py-1 text-xs font-semibold hover:bg-white/20">
+        {perfil.nome || perfil.email}{perfil.administrador ? " · administrador" : ""} ▾
+      </summary>
+      <div className="cartao absolute right-0 z-20 mt-2 w-72 p-3 text-sm text-texto">
+        <p className="break-all font-semibold">{perfil.email}</p>
+        <p className="mb-2 text-xs text-suave">
+          {perfil.vinculos.length ? perfil.vinculos.map((v) => `${v.papel} · ${v.organizacao}`).join("; ") : perfil.administrador ? "Administrador do sistema" : "Sem vínculo com organização"}
+        </p>
+        <form className="flex flex-col gap-2 border-t border-borda pt-2" onSubmit={async (e) => {
+          e.preventDefault();
+          const erro = await trocarSenha(nova);
+          setMsg(erro ?? "Senha trocada.");
+          if (!erro) setNova("");
+        }}>
+          <label className="flex flex-col gap-1"><span className="rotulo">Nova senha (mínimo 10)</span>
+            <input type="password" minLength={10} required autoComplete="new-password" className="entrada" value={nova} onChange={(e) => setNova(e.target.value)} /></label>
+          <button className="botao" type="submit">Trocar minha senha</button>
+          {msg && <p className="text-xs" role="status">{msg}</p>}
+        </form>
+        <button className="botao-primario mt-3 w-full text-sm" onClick={() => void sair()}>Sair</button>
+      </div>
+    </details>
   );
 }

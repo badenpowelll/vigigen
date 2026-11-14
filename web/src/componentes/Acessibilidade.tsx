@@ -51,7 +51,7 @@ const ATALHOS: [string, string][] = [
   ["Enter ou Espaço", "ativa botão, município do mapa ou opção"],
   ["Setas", "trocam a opção em grupos (agravo, camada, tema) e percorrem as semanas nos gráficos"],
   ["Esc", "fecha janelas, dicas e o painel de notificações"],
-  ["Alt+Shift+1 a 8", "vai para a aba 1 a 8"],
+  ["Alt+Shift+número", "vai para a aba daquele número (lista abaixo)"],
   ["Alt+Shift+D / C / Z", "agravo Dengue / Chikungunya / Zika"],
   ["Alt+Shift+M", "vai para o seletor de município"],
   ["Alt+Shift+P", "vai para o conteúdo principal"],

@@ -306,3 +306,23 @@ kbd { font-family: var(--font-family-mono, monospace); font-size: .8em; padding:
 main:focus { outline: none; }
 .pular-mapa { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .pular-mapa:focus { position: static; width: auto; height: auto; clip: auto; margin-bottom: .5rem; padding: .25rem .75rem; border-radius: 6px; background: var(--interactive); color: var(--pure-0, #fff); font-weight: 600; white-space: normal; }
+
+/* formulários (login e administração) */
+.entrada {
+  border: 1px solid var(--borda); background: var(--superficie); color: var(--texto);
+  border-radius: 10px; padding: 0.45rem 0.75rem; font-size: 0.95rem; min-width: 0;
+}
+.botao-primario {
+  background: var(--imd); color: #fff; border-radius: 30px; padding: 0.5rem 1.1rem; font-weight: 600;
+}
+.botao-primario:hover { background: var(--imd-forte); }
+.botao-primario:disabled { opacity: 0.6; }
+.botao {
+  border: 1px solid var(--borda); border-radius: 30px; padding: 0.3rem 0.85rem; font-size: 0.85rem; font-weight: 600;
+  background: var(--superficie);
+}
+.botao:hover { background: var(--superficie-2); }
+.tabela { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.tabela th { text-align: left; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--texto-suave);
+  font-weight: 600; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borda); white-space: nowrap; }
+.tabela td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borda); vertical-align: top; }

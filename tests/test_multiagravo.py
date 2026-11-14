@@ -48,3 +48,32 @@ def test_migracao_013_em_postgres_descartavel():
         saida += r.stderr
     for m in ("013", "014", "015", "016"):
         assert f"OK: migração {m}" in saida
+
+
+@pytest.mark.skipif(not os.getenv("VIGIGEN_PG_TESTE") or not shutil.which("psql"),
+                    reason="defina VIGIGEN_PG_TESTE=<url de um Postgres descartável> para testar a migração")
+def test_cadeia_011_a_016_com_administracao_real():
+    """Integração das PRs #1, #2 e #5: a 011 real (administração) seguida de 012, 013, 015 e 016.
+    A 014 fica de fora porque usa PostGIS (testada à parte com stubs)."""
+    url = os.environ["VIGIGEN_PG_TESTE"]
+    banco = "vigigen_cadeia_teste"
+    sem_q, _, q = url.partition("?")
+    raiz = sem_q.rsplit("/", 1)[0]
+    sufixo = f"?{q}" if q else ""
+    admin, alvo = f"{raiz}/postgres{sufixo}", f"{raiz}/{banco}{sufixo}"
+    for cmd in (f"drop database if exists {banco}", f"create database {banco}"):
+        r = subprocess.run(["psql", admin, "-qc", cmd], capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+    arquivos = ["tests/fixtures/sql/FIXTURE_esquema_minimo.sql", "tests/fixtures/sql/FIXTURE_stub_auth_admin.sql"] + [
+        f"src/db/migrations/{m}.sql" for m in
+        ("011_administracao", "012_genbank_diario", "013_multiagravo", "015_seguranca", "016_sla_painel")]
+    for arq in arquivos:
+        r = subprocess.run(["psql", alvo, "-q", "-v", "ON_ERROR_STOP=1", "-f", arq],
+                           cwd=RAIZ, capture_output=True, text=True)
+        assert r.returncode == 0, f"{arq}: {r.stderr}"
+    r = subprocess.run(["psql", alvo, "-Atc",
+                        "select public.painel_resumo() ? 'sla', public.painel_resumo() ? 'deteccao', "
+                        "(public.painel_sla()->>'meta_cumprimento')::int"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip() == "t|t|95"

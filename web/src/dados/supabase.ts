@@ -5,7 +5,9 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const CHAVE = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-export const supabase: SupabaseClient | null = URL && CHAVE ? createClient(URL, CHAVE) : null;
+// O artefato do claude.ai nunca usa supabase-js (CSP), mesmo que haja .env.
+export const supabase: SupabaseClient | null =
+  URL && CHAVE && import.meta.env.MODE !== "artefato" ? createClient(URL, CHAVE) : null;
 
 export async function viaSupabase<T>(funcao: string, args: Record<string, unknown> = {}): Promise<{ dado: T; em: number }> {
   if (!supabase) throw { codigo: "sem_supabase", mensagem: "Supabase não configurado" };
