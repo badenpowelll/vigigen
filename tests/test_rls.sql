@@ -24,6 +24,10 @@ declare
   u         record;
   falhas    text[] := '{}';
 begin
+  -- desde a 011 o cadastro é fechado: auth.users só aceita e-mail com convite liberado
+  perform app.novo_convite(e, 'FIXTURE', false, null, null, 'cadastro', null)
+  from unnest(array['FIXTURE_natal@vigigen.invalid', 'FIXTURE_mossoro@vigigen.invalid', 'FIXTURE_estado@vigigen.invalid']) e;
+  update public.convite set liberado_em = now() where email like 'fixture\_%@vigigen.invalid';
   insert into auth.users (id, email, aud, role, instance_id)
   values (u_natal,  'FIXTURE_natal@vigigen.invalid',   'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000'),
          (u_moss,   'FIXTURE_mossoro@vigigen.invalid', 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000'),

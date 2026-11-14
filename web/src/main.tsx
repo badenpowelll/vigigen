@@ -10,18 +10,22 @@ import "@govbr-ds/core/dist/components/message/message.min.css";
 import { supabase } from "./dados/supabase";
 import { useSessao } from "./dados/auth";
 import { TelaLogin } from "./telas/TelaLogin";
+import { TelaAcessoBloqueado } from "./telas/TelaAcessoBloqueado";
 import "./tema.css";
 
 // tema escolhido aplicado antes da primeira pintura (sem piscar)
 aplicarTema(lerTema());
 
-// Painel web (com Supabase configurado): exige login. Artefato do claude.ai
-// (sem Supabase): abre direto, lendo pelo conector do visitante ou pelo retrato.
+// Painel web (com Supabase configurado): exige login E perfil ativo confirmado
+// pelo banco. Sessão sem perfil, conta desativada, conta sem território ou falha
+// ao ler o perfil não abrem o painel. Artefato do claude.ai (sem Supabase):
+// abre direto, lendo pelo conector do visitante ou pelo retrato.
 function Raiz() {
-  const { sessao, perfil, pronto } = useSessao();
+  const { perfil, situacao, tentarDeNovo } = useSessao();
   if (!supabase) return <App />;
-  if (!pronto) return <p className="gutter py-8 text-suave">Verificando acesso…</p>;
-  if (!sessao) return <TelaLogin />;
+  if (situacao === "carregando") return <p className="gutter py-8 text-suave">Verificando acesso…</p>;
+  if (situacao === "sem_sessao") return <TelaLogin />;
+  if (situacao !== "ok" || !perfil) return <TelaAcessoBloqueado situacao={situacao} aoTentar={tentarDeNovo} />;
   return <App perfil={perfil} />;
 }
 
