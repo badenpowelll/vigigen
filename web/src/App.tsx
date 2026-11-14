@@ -54,8 +54,13 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
   );
 
   // Natal como padrão, achado pelo nome (não por código fixo no código-fonte).
+  // Só na primeira carga: depois, escolher "Rio Grande do Norte (estado)" (g = null)
+  // tem de ficar no estado. Antes, este efeito voltava para Natal a cada escolha.
+  const padraoAplicado = useRef(false);
   useEffect(() => {
-    if (g === null && municipios.length) {
+    if (padraoAplicado.current || !municipios.length) return;
+    padraoAplicado.current = true;
+    if (g === null) {
       const natal = municipios.find((m) => m.n.toLocaleLowerCase("pt-BR") === "natal");
       if (natal) setG(natal.g);
     }
