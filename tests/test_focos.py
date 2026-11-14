@@ -128,3 +128,78 @@ def test_integracao_resposta_real_infodengue():
         assert e is not None and np.isfinite(e["c2"])
         sinais = r4_aumento_local({"2408102": serie}, semanas, t)
         assert bool(sinais) == (e["c2"] > focos.C2_LIMIAR and e["observado"] >= focos.C2_MIN_CASOS)
+
+
+# ---------------------------------------------------------------------------
+# Banco: migração 020 e gravação de alertas por episódio (Postgres descartável)
+# ---------------------------------------------------------------------------
+import os  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+
+import pytest  # noqa: E402
+
+RAIZ = Path(__file__).resolve().parents[1]
+PG = os.getenv("VIGIGEN_PG_TESTE")
+sem_pg = pytest.mark.skipif(not PG or not shutil.which("psql"),
+                            reason="defina VIGIGEN_PG_TESTE=<url de um Postgres descartável>")
+
+
+def _banco_novo(nome: str) -> str:
+    sem_q, _, q = PG.partition("?")
+    raiz = sem_q.rsplit("/", 1)[0]
+    suf = f"?{q}" if q else ""
+    for cmd in (f"drop database if exists {nome}", f"create database {nome}"):
+        r = subprocess.run(["psql", f"{raiz}/postgres{suf}", "-qc", cmd], capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+    return f"{raiz}/{nome}{suf}"
+
+
+def _psql(url: str, arq: str) -> str:
+    r = subprocess.run(["psql", url, "-q", "-v", "ON_ERROR_STOP=1", "-f", arq], cwd=RAIZ, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    return r.stderr
+
+
+@sem_pg
+def test_migracao_020():
+    url = _banco_novo("vigigen_focos_020")
+    _psql(url, "tests/fixtures/sql/FIXTURE_esquema_minimo.sql")
+    assert "OK: migração 020" in _psql(url, "tests/fixtures/sql/FIXTURE_teste_020.sql")
+
+
+@sem_pg
+def test_focos_db_grava_so_abertura_de_episodio(tmp_path, monkeypatch):
+    """Séries FIXTURE_ (não reais) num banco descartável com stubs de PostGIS."""
+    import psycopg
+
+    from src.indicators import focos_db
+    url = _banco_novo("vigigen_focos_db")
+    _psql(url, "tests/fixtures/sql/FIXTURE_esquema_minimo.sql")
+    _psql(url, "tests/fixtures/sql/FIXTURE_teste_020.sql")
+    with psycopg.connect(url, autocommit=True) as con:
+        con.execute("""
+            create schema if not exists extensions;
+            alter table public.municipio add column geometria point;
+            alter table public.caso_semanal add column casos_estimados numeric, add column bruto_id bigint;
+            create function extensions.st_pointonsurface(p point) returns point language sql as 'select p';
+            create function extensions.st_x(p point) returns float8 language sql as 'select p[0]';
+            create function extensions.st_y(p point) returns float8 language sql as 'select p[1]';""")
+        for i in range(4):
+            con.execute("insert into public.municipio values (%s, %s, 'RN', point(%s, 0))",
+                        (2499000 + i, f"FIXTURE_M{i}", float(i)))
+        semanas = [202501 + k for k in range(52)] + [202601 + k for k in range(4)]
+        for i in range(4):
+            for k, s in enumerate(semanas):
+                n = 3 + (40 if i == 0 and k == len(semanas) - 1 else 0)
+                con.execute("insert into public.caso_semanal (geocodigo, doenca, semana_epidemiologica, casos, "
+                            "casos_estimados) values (%s, 'dengue', %s, %s, %s)", (2499000 + i, s, n, n))
+    monkeypatch.setenv("DATABASE_URL", url)
+    r1 = focos_db.detectar(tmp_path / "r1.json", ["dengue", "chikungunya"])
+    assert r1["agravos"]["chikungunya"]["status"] == "sem dado em caso_semanal"
+    assert r1["agravos"]["dengue"]["alertas_gravados"] >= 1
+    with psycopg.connect(url) as con:
+        tipos = con.execute("select tipo, geocodigo, agravo from public.alerta").fetchall()
+    assert ("R4_aumento_local", 2499000, "dengue") in tipos
+    r2 = focos_db.detectar(tmp_path / "r2.json", ["dengue"])
+    assert r2["agravos"]["dengue"]["alertas_gravados"] == 0, "rodar de novo não duplica"
