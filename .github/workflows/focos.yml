@@ -1,0 +1,34 @@
+# Detecção de focos (R4 aumento local, R5 aglomerado) sobre public.caso_semanal,
+# depois de cada carga do InfoDengue (segunda e quinta, 09:00 UTC). Grava em
+# public.alerta só a abertura de cada episódio, com status "novo" para revisão
+# humana (D-022). Segredo necessário: DATABASE_URL.
+#
+# O agendamento fica DESLIGADO até o Baden autorizar a detecção em produção:
+# para ligar, descomente o bloco "schedule" abaixo.
+name: focos
+on:
+  workflow_dispatch:
+    inputs:
+      semanas:
+        description: "Quantas semanas recentes avaliar (1 = só a última)"
+        default: "1"
+#  schedule:
+#    - cron: "0 11 * * 1,4"   # segunda e quinta, 2 h depois da carga do InfoDengue
+jobs:
+  detectar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -r requirements.txt
+      - name: Detectar focos e gravar alertas
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then echo "::error::Falta o segredo DATABASE_URL no repositório"; exit 1; fi
+          python -m src.indicators.focos_db detectar data/interim/focos/relatorio.json --semanas "${{ github.event.inputs.semanas || '1' }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: focos-relatorio
+          path: data/interim/focos/

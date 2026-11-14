@@ -1,0 +1,17 @@
+{
+ "id": 4810,
+ "endpoint": "https://info.dengue.mat.br/api/alertcity",
+ "parametros": {
+  "ew_end": "53",
+  "ey_end": "2026",
+  "format": "json",
+  "disease": "dengue",
+  "geocode": "2408102",
+  "ew_start": "1",
+  "ey_start": "2026"
+ },
+ "status_http": 200,
+ "obtido_em": "2026-11-14T15:08:04.091905+00:00",
+ "sha256": "01003947b61b7bb8b4f33648961bb7659dcb99a351f3211ecbbcbefba52d3c85",
+ "origem": "public.bruto do Supabase VigiGen (resposta crua gravada pela Edge Function ingest-infodengue)"
+}
