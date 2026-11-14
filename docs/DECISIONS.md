@@ -228,3 +228,34 @@ Pedido por Baden (auditorias de 14/11). O que mudou e por quê:
   grupos de opção com setas, gráficos percorríveis pelo teclado com dica
   flutuante, dicas "i" nos indicadores, regiões roláveis focáveis. Verificado com
   axe-core 4.10.2 nas 8 abas, nos dois temas, em 1366 px e 390 px: zero violações.
+
+## D-022 — Detecção de focos: R4 (aumento local) e R5 (aglomerado) (14/11/2026)
+
+Pedido por Baden em 14/11/2026 ("implementar esses 3 pontos que iremos
+sustentar"), a partir da proposta do módulo de focos. Detalhes em `docs/FOCOS.md`.
+
+- **R4, aumento local: EARS C2** por município e semana, sobre
+  `caso_semanal.casos_estimados` (nowcast do InfoDengue; casos notificados quando
+  nulo). Linha de base t-3 a t-9, limiar 3 desvios, piso de 1 caso no desvio,
+  mínimo de 5 casos. Escolhido por ser simples, documentado e explicável às equipes.
+- **R5, aglomerado: varredura espaço-temporal prospectiva de Kulldorff, modelo
+  de permutação**, implementada em Python/NumPy (`src/indicators/focos.py`).
+  Período de estudo de 52 semanas, até 10 municípios vizinhos (centroides do
+  IBGE), até 4 semanas, 999 réplicas, intervalo de recorrência mínimo de 52
+  semanas, pelo menos 2 municípios e 5 casos. Ainda **em validação**: comparar
+  com o SaTScan nos mesmos dados é tarefa do doutorado. Farrington flexível fica
+  como comparação futura (implementação de referência em R).
+- **Episódio**: um alerta por foco, não um por semana. Um sinal abre episódio
+  se o município ficou 4 semanas sem sinal R4/R5 do mesmo agravo; senão o
+  prolonga. Só a abertura vai para `public.alerta` (status "novo", revisão humana).
+- **Margem de erro do local de infecção** (para quando houver exame por
+  território): cada caso é repartido entre residência, vizinhos e destinos de
+  deslocamento em três cenários (100%, 70% e 50% na residência); o território
+  mostra a faixa mínimo–máximo e o sinal é "robusto" quando aparece em todos os
+  cenários, "sinal fraco" quando só em parte.
+- **Contrato de entrada `public.exame_territorial`** (migração 020, não
+  aplicada): só contagens agregadas na origem por setor censitário ou bairro,
+  sem dado pessoal; contagem de 1 a 4 abaixo do município é recusada pelo banco.
+  Fica vazia até o acordo com o LAIS/UFRN (PEP) ou a SESAP-RN (GAL).
+- **Nada em produção**: a migração 020 não foi aplicada e o workflow `focos.yml`
+  só roda manualmente; o agendamento fica comentado até autorização do Baden.
