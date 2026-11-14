@@ -18,6 +18,16 @@ export function ordenarMunicipios(lista: MunicipioSemana[], col: Coluna, desc: b
   });
 }
 
+/** Legenda das colunas, em linguagem simples. */
+export const SIGNIFICADOS: [string, string][] = [
+  ["Município", "Cidade do Rio Grande do Norte. Clique no nome para abrir os dados só dela."],
+  ["Nível", "Nível de alerta do InfoDengue na semana: Baixo (sem sinal de transmissão), Atenção (clima favorável ao mosquito), Alerta (transmissão sustentada) e Emergência (incidência alta, risco de epidemia)."],
+  ["Casos notificados", "Casos suspeitos que as unidades de saúde notificaram ao SINAN nesta semana. Nas semanas recentes o número ainda sobe, porque parte das notificações chega com atraso."],
+  ["Casos estimados", "Estimativa do InfoDengue de quantos casos esta semana terá quando todas as notificações atrasadas chegarem."],
+  ["Incidência", "Casos estimados para cada 100 mil habitantes. Serve para comparar cidades de tamanhos diferentes. Por usar os casos estimados, pode ser maior que zero mesmo com 0 caso notificado."],
+  ["Rt", "Número de reprodução: quantas pessoas, em média, cada pessoa infectada acaba contaminando, por meio do mosquito. Acima de 1, a transmissão está crescendo; abaixo de 1, está diminuindo. Em cidades com pouquíssimos casos o Rt oscila muito e deve ser lido com cuidado."],
+];
+
 function semAcento(t: string) { return t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLocaleLowerCase("pt-BR"); }
 
 /** Tabela dos municípios do RN na semana, para a visão do estado. Clicar no nome abre o município. */
@@ -80,7 +90,18 @@ export function ListaMunicipios({ municipios, periodo, aoSelecionar }: {
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-xs text-suave">Fonte: InfoDengue (Fiocruz/FGV). A incidência é a do InfoDengue, calculada sobre os casos estimados (que corrigem o atraso de notificação) e a população do IBGE; por isso um município pode ter incidência com 0 caso notificado. "Sem registro" e "—" indicam que o InfoDengue não publicou o valor nesta semana; isso não é zero.</p>
+      <section aria-labelledby="significado-colunas" className="mt-3 rounded-[var(--raio)] border border-borda bg-[var(--superficie-2)] p-3 text-sm">
+        <h3 id="significado-colunas" className="mb-2 font-semibold">O que significa cada coluna</h3>
+        <dl className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-[max-content_1fr]">
+          {SIGNIFICADOS.map(([termo, texto]) => (
+            <div key={termo} className="contents">
+              <dt className="font-semibold">{termo}</dt>
+              <dd className="text-suave">{texto}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-2 text-xs text-suave">Fonte: InfoDengue (Fiocruz/FGV), com população do IBGE. "Sem registro" e "—" indicam que o InfoDengue não publicou o valor nesta semana; isso não é zero.</p>
+      </section>
     </div>
   );
 }
