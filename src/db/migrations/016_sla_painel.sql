@@ -51,8 +51,15 @@ revoke all on function public.painel_sla() from public, anon;
 grant execute on function public.painel_sla() to authenticated;
 
 -- painel_resumo da 013 continua igual e ganha a chave "sla".
-alter function public.painel_resumo() rename to painel_resumo_base;
-create function public.painel_resumo()
+-- Idempotente: só renomeia na primeira aplicação (homologação de 14/11/2026
+-- mostrou que reaplicar a 016 falhava com "painel_resumo_base already exists").
+do $$ begin
+  if not exists (select 1 from pg_proc where proname = 'painel_resumo_base'
+                 and pronamespace = 'public'::regnamespace) then
+    alter function public.painel_resumo() rename to painel_resumo_base;
+  end if;
+end $$;
+create or replace function public.painel_resumo()
 returns jsonb language sql stable security invoker set search_path = '' as $$
   select public.painel_resumo_base() || jsonb_build_object('sla', public.painel_sla());
 $$;

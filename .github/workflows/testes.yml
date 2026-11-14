@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:17
+        image: postgis/postgis:17-3.5  # Postgres 17 + PostGIS, como o Supabase
         env: { POSTGRES_PASSWORD: teste }
         ports: ["5432:5432"]
         options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
@@ -30,3 +30,5 @@ jobs:
         run: deno check supabase/functions/*/index.ts
       - name: pytest
         run: python -m pytest -q -rs
+      - name: Cadeia de migrações 001–020 em Postgres 17 + PostGIS (e reaplicação de 013–020)
+        run: scripts/homologar_migracoes.sh "$VIGIGEN_PG_TESTE"
