@@ -37,7 +37,9 @@ avaliação precisa ser reproduzível por terceiros.
 - Ingestão local/reprodutível: CLI Python 3.11+ em `src/ingest/`
   (`python -m src.ingest --fonte ...`), mesmos endpoints, grava em `data/raw/`.
 - Node 20+ e React + TypeScript + Vite + Tailwind para o painel (`web/`).
-  Visual segue o design system do Instituto Metrópole Digital (UFRN).
+  Visual segue o Padrão Digital de Governo (gov.br Design System 3.x): tokens
+  de cor, tipografia Rawline (Raleway como substituta) e superfícies; a marca
+  do VigiGen continua a própria, sem a marca gov.br (D-014).
 - Nextclade CLI para classificação de sorotipo e linhagem (`src/pipeline/`),
   executado no GitHub Actions ou localmente.
 - Nextflow para orquestrar o pipeline quando ele estiver estável (fase

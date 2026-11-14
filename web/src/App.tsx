@@ -70,24 +70,24 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="bg-imd text-white">
+      <header className="bg-superficie text-texto" style={{ boxShadow: "var(--sombra)" }}>
         <div className="gutter mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 py-3">
           <div className="flex items-center gap-3">
-            <Marca variante="escuro" className="h-9 w-auto" />
+            <Marca className="h-9 w-auto" />
             <div className="leading-tight">
-              <h1 className="text-xl font-bold tracking-tight">VigiGen</h1>
-              <p className="text-[0.8rem] text-white/80">Vigilância genômica de arboviroses · Rio Grande do Norte</p>
+              <h1 className="text-xl font-bold tracking-tight text-imd dark:text-texto">VigiGen</h1>
+              <p className="text-[0.8rem] text-suave">Vigilância genômica de arboviroses · Rio Grande do Norte</p>
             </div>
           </div>
           <Origem {...dados} />
         </div>
-        <nav className="gutter mx-auto max-w-7xl overflow-x-auto" aria-label="Seções do painel">
+        <nav className="gutter mx-auto max-w-7xl overflow-x-auto border-t border-borda" aria-label="Seções do painel">
           <ul className="flex gap-1 whitespace-nowrap">
             {ABAS.map((a) => (
               <li key={a.id}>
                 <a href={`#${a.id}`} onClick={(e) => { e.preventDefault(); irPara(a.id); }}
                   aria-current={aba === a.id ? "page" : undefined}
-                  className={`inline-block rounded-t-xl px-3 py-2 text-sm font-semibold ${aba === a.id ? "bg-fundo text-imd dark:text-texto" : "text-white/85 hover:bg-white/10"}`}>
+                  className={`inline-block border-b-4 px-3 py-2.5 text-sm font-semibold ${aba === a.id ? "border-imd text-imd dark:border-destaque dark:text-texto" : "border-transparent text-suave hover:bg-[var(--superficie-2)] hover:text-texto"}`}>
                   {a.r}
                 </a>
               </li>
@@ -148,9 +148,9 @@ function Origem({ origem, lidoEm, carregando }: ReturnType<typeof useDados>) {
         : origem === "retrato" ? "Retrato embutido do banco"
           : "Sem leitura";
   return (
-    <div className="rounded-pilula bg-white/10 px-3 py-1 text-xs" role="status">
+    <div className="rounded-pilula bg-[var(--superficie-2)] px-3 py-1 text-xs" role="status">
       <span className="font-semibold">{carregando && origem === "retrato" ? "Tentando dado ao vivo… " : ""}{texto}</span>
-      {lidoEm && <span className="text-white/80"> · {fmtDataHora(lidoEm)} ({haQuanto(lidoEm)})</span>}
+      {lidoEm && <span className="text-suave"> · {fmtDataHora(lidoEm)} ({haQuanto(lidoEm)})</span>}
     </div>
   );
 }

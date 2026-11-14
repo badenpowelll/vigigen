@@ -94,3 +94,16 @@ Consulta real em 2026-10-16T12:01Z, Nextclade 3.25.0, `nextclade dataset list --
 | `community/v-gen-lab/dengue/denv4` | genótipo/linhagem DENV-4 (32 clados) | 2026-10-06--17-37-18Z |
 
 Todos aparecem marcados como `experimental`. Nenhum dataset de chikungunya ou Zika apareceu nesta busca.
+
+## D-014 · Visual no Padrão Digital de Governo (14/11/2026) · pedido por Baden
+**Contexto.** Baden pediu o design system do governo federal (gov.br DS,
+versão 3.7.0, https://www.gov.br/ds/) no painel, no lugar do visual IMD/UFRN.
+**Decisão.** `web/src/tema.css` passa a usar os tokens do gov.br: primária
+`blue-warm-vivid-70` (#1351b4), neutros `gray-2/5/20/60/80`, sucesso
+`green-cool-vivid-50`, escala do mapa `blue-warm-vivid-10` a `-80`, cantos de
+8 px e sombra `surface-shadow-sm`. Cabeçalho claro com abas sublinhadas, como
+no padrão. Fonte Rawline quando instalada, com Raleway (Google Fonts) como
+substituta. Valores conferidos no `core.css` 3.0.0 do GOVBR-DS servido pela
+Receita Federal; amarelo (#ffcd07) e vermelho (#e52207) de alerta não
+puderam ser conferidos nessa leitura. A marca do VigiGen continua a própria:
+o painel não usa a marca gov.br, porque não é um serviço do governo federal.
