@@ -12,17 +12,18 @@ import { TelaQualidade } from "./telas/TelaQualidade";
 import { TelaPerfil } from "./telas/TelaPerfil";
 import { TelaSobre } from "./telas/TelaSobre";
 import { TelaRelatorios } from "./telas/TelaRelatorios";
+import { Sininho } from "./componentes/Sininho";
 import type { Ctx } from "./telas/ctx";
 
 const ABAS = [
   { id: "visao", r: "Visão geral" },
   { id: "serie", r: "Série temporal" },
   { id: "mapa", r: "Mapa" },
-  { id: "alertas", r: "Alertas" },
   { id: "qualidade", r: "Qualidade do dado" },
   { id: "perfil", r: "Perfil do município" },
   { id: "relatorios", r: "Relatórios" },
   { id: "sobre", r: "Fontes e método" },
+  { id: "alertas", r: "Alertas" },
 ] as const;
 type Aba = (typeof ABAS)[number]["id"];
 
@@ -81,7 +82,10 @@ export default function App() {
               <p className="text-[0.8rem] text-suave">Vigilância genômica de arboviroses · Rio Grande do Norte</p>
             </div>
           </div>
-          <Origem {...dados} />
+          <div className="flex items-center gap-2">
+            <Origem {...dados} />
+            <Sininho alertas={dados.resumo?.alertas ?? null} nomes={municipios} aoAbrir={() => irPara("alertas")} />
+          </div>
         </div>
         <nav className="gutter mx-auto max-w-7xl overflow-x-auto border-t border-borda" aria-label="Seções do painel">
           <ul className="flex gap-1 whitespace-nowrap">
