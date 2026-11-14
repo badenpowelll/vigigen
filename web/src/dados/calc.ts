@@ -1,5 +1,5 @@
 // Contas derivadas do dado do banco. Só agregações transparentes; nada estimado aqui.
-import type { Doenca, Indicador, MunicipioSemana, Resumo, Semana, Serie } from "./tipos";
+import type { Alerta, Doenca, Indicador, MunicipioSemana, Resumo, Semana, Serie } from "./tipos";
 import { trimestreDe } from "../util";
 
 export interface Agregado {
@@ -92,6 +92,34 @@ export function genomicaDe(r: Resumo | null, doenca: Doenca): {
   const vazio: Resumo = { ...r, genbank: { total: 0, rn: 0, rn_por_nome_cepa: 0, brasil_sem_estado: 0, sem_geo: 0, genoma_quase_completo: 0, por_sorotipo: {}, termo: "" },
     sequencias_rn: [], composicao_brasil: [], por_ano_brasil: [], indicadores: [], cobertura_municipal_trimestre: [] };
   return { r: vazio, estado: "nao_ingerido", limiar: null, criterioLimiar: null, termo: null, consultaEm: null, classificacao: null };
+}
+
+/**
+ * Sequências classificadas do agravo. Usa a contagem por vírus do bloco
+ * genômico (migração 013). Sem o bloco, o total antigo do resumo só vale para
+ * dengue, que era o único vírus ingerido; para os outros é zero, nunca o de dengue.
+ */
+export function classificadasDe(r: Resumo | null, doenca: Doenca): number {
+  if (!r) return 0;
+  const porAgravo = r.genomica?.[doenca]?.classificacao?.total;
+  if (typeof porAgravo === "number") return porAgravo;
+  return doenca === "dengue" ? r.classificacao.total : 0;
+}
+
+/** Alertas do agravo e do território. Alertas anteriores à migração 013 não têm agravo e são de dengue. */
+export function alertasDe(r: Resumo | null, doenca: Doenca, g: number | null): Alerta[] {
+  return r ? r.alertas.filter((a) => (a.a ?? "dengue") === doenca && (g === null || a.g === g)) : [];
+}
+
+/**
+ * Estado da camada de cobertura do mapa. Distingue indicador não calculado,
+ * nenhum município com valor (só "sem dado") e zero observado de verdade.
+ */
+export type EstadoCobertura = "nao_calculado" | "so_sem_dado" | "zero_observado" | "com_valor";
+export function estadoCobertura(valores: (number | null)[]): EstadoCobertura {
+  if (valores.length === 0) return "nao_calculado";
+  if (valores.some((v) => v !== null && v > 0)) return "com_valor";
+  return valores.some((v) => v === 0) ? "zero_observado" : "so_sem_dado";
 }
 
 export const SIGLA_VIRUS: Record<Doenca, string> = { dengue: "DENV", chikungunya: "CHIKV", zika: "ZIKV" };

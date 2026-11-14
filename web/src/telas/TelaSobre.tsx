@@ -5,7 +5,7 @@ import { fmtDataHora, fmtNum } from "../util";
 const FONTES = [
   { id: "infodengue", nome: "InfoDengue (Fiocruz / FGV)", url: "https://info.dengue.mat.br/services/api", uso: "Casos notificados e estimados, incidência, Rt e nível de alerta por município e semana epidemiológica. Endpoint /api/alertcity, formato JSON. Atualização semanal." },
   { id: "genbank", nome: "NCBI GenBank (E-utilities)", url: "https://www.ncbi.nlm.nih.gov/books/NBK25501/", uso: "Sequências de dengue, chikungunya e Zika depositadas com origem Brasil, um termo de busca por vírus: esearch + efetch (GBSet XML). Metadados de coleta, origem, sorotipo declarado (só dengue) e FASTA. O vírus de cada sequência vem do organismo declarado no registro." },
-  { id: "ibge", nome: "IBGE: Localidades e malha municipal", url: "https://servicodados.ibge.gov.br/api/docs/localidades", uso: "Lista oficial dos 167 municípios do RN e limites municipais. A API de localidades falhou por certificado TLS; a malha veio do GeoServer oficial do IBGE (BC250 2025), com o erro registrado." },
+  { id: "ibge", nome: "IBGE: Localidades e malha municipal", url: "https://servicodados.ibge.gov.br/api/docs/localidades", uso: "Lista oficial dos 167 municípios do RN e limites municipais. A rota usada em cada carga fica registrada; veja abaixo a da última." },
 ];
 
 export function TelaSobre({ dados }: Ctx) {
@@ -26,6 +26,15 @@ export function TelaSobre({ dados }: Ctx) {
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-suave">{f.uso}</p>
+                {f.id === "ibge" && st?.rota && (
+                  <p className="mt-1 text-sm text-suave">
+                    {st.rota === "geoservicos_wfs"
+                      ? "Na última carga a API de localidades não respondeu e a malha veio da rota alternativa oficial, o GeoServer do IBGE (BC250), com o erro registrado."
+                      : st.rota === "servicodados"
+                        ? "Na última carga a API de localidades respondeu normalmente."
+                        : `Rota registrada na última carga: ${st.rota}.`}
+                  </p>
+                )}
               </li>
             );
           })}

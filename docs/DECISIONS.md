@@ -159,3 +159,31 @@ real de CHIKV e ZIKV pelo mesmo caminho do GenBank.
 **Estado.** Código e migração 013 na PR #2, testados num Postgres local
 (`tests/fixtures/sql/FIXTURE_teste_013.sql`). Nada aplicado em produção até autorização do
 Baden: aplicar a 013, publicar a Edge Function e disparar a primeira carga.
+
+## D-016 — Correções da auditoria de 14/11/2026 no painel
+
+**Contexto.** A auditoria da PR #2 achou quatro pontos em que o painel podia
+mostrar número de outro vírus ou tratar ausência de dado como zero.
+
+**Decisão.**
+- Alertas e contagem de sequências classificadas passam por duas funções
+  únicas em `web/src/dados/calc.ts`: `alertasDe` (agravo e território juntos)
+  e `classificadasDe` (contagem do próprio vírus; sem o bloco por agravo, o
+  total antigo vale só para dengue). Visão Geral e Alertas usam as duas.
+- O mapa de cobertura distingue indicador não calculado, só "sem dado" e zero
+  observado (`estadoCobertura`). O aviso de "nenhuma sequência depositada" só
+  aparece no zero observado.
+- O rótulo "% dos casos sequenciados" virou "sequências públicas
+  identificáveis ÷ casos notificados", e o cartão da Visão Geral usa o mesmo
+  nome do mapa: "Cobertura genômica observável no GenBank".
+- O texto sobre a falha da API de localidades do IBGE deixa de ser fixo: a
+  aba Sobre mostra a rota registrada na última carga (`fontes.ibge.rota`).
+- Sem alerta e com classificações, a tela diz que ainda não recebe a data da
+  última execução das regras; ausência de alerta não é mostrada como
+  detecção concluída.
+
+**Testes.** `npm test` em `web/` (vitest, objetos FIXTURE_).
+
+**Pendente.** Gravar e expor a data da última execução das regras de
+detecção por agravo, para o painel poder afirmar "detecção concluída sem
+alertas".

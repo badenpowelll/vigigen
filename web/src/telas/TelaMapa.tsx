@@ -3,7 +3,7 @@ import type { Ctx } from "./ctx";
 import { Alternador, Nota, Secao } from "../componentes/basicos";
 import { Mapa, TabelaMapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
 import { DOENCA_ROTULO, fmtData, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
-import { genomicaDe, motivoSemGenomica } from "../dados/calc";
+import { estadoCobertura, genomicaDe, motivoSemGenomica } from "../dados/calc";
 
 type Camada = "incidencia" | "casos" | "cobertura";
 
@@ -20,7 +20,7 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
     const mp = new Map<number, ValorMapa>();
     if (camada === "cobertura") {
       cobMun.forEach((x) => mp.set(x.g, x.v === null ? { v: null, motivo: x.mot ?? "sem denominador" } : { v: x.v * 100, detalhe: `${x.num} seq. / ${fmtNum(x.den)} casos` }));
-      return { valores: mp, unidade: "% dos casos sequenciados", formatar: (v: number) => fmtNum(v, 2), periodo: cobMun[0] ? fmtTrimestre(cobMun[0].p) : "—" };
+      return { valores: mp, unidade: "% · sequências públicas identificáveis ÷ casos notificados", formatar: (v: number) => fmtNum(v, 2), periodo: cobMun[0] ? fmtTrimestre(cobMun[0].p) : "—" };
     }
     sem?.municipios.forEach((x) => {
       const v = camada === "incidencia" ? x.i : x.c;
@@ -39,7 +39,9 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
     return { n, v: v?.v ?? null, motivo: v ? v.motivo : "sem registro" };
   }).sort((a, b) => (b.v ?? -1) - (a.v ?? -1)), [nomes, valores]);
 
-  const todosZero = camada === "cobertura" && [...valores.values()].every((v) => v.v === null || v.v === 0);
+  // Só vale para a camada de cobertura e quando o agravo tem sequências ingeridas;
+  // sem isso o aviso de "não ingerido" acima já explica a ausência.
+  const estCob = camada === "cobertura" && gen.estado === "ok" ? estadoCobertura([...valores.values()].map((v) => v.v)) : null;
 
   // Quatro estados da cobertura, contados sobre os municípios da malha (nada é inferido).
   const estados = useMemo(() => {
@@ -75,11 +77,23 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
       {camada === "cobertura" && gen.estado !== "ok" && (
         <div className="mb-3"><Nota tipo="aviso">{motivoSemGenomica(doenca, gen.estado)}</Nota></div>
       )}
-      {todosZero && (
+      {estCob === "zero_observado" && (
         <div className="mb-3"><Nota tipo="aviso">
           Nenhum município do RN tem sequência depositada com coleta neste trimestre. A cobertura é 0% onde houve casos e fica
           "sem dado" onde não houve casos ou onde há sequência do RN sem município identificável. Isto reflete o que está
           depositado no GenBank, não a capacidade de sequenciamento do estado.
+        </Nota></div>
+      )}
+      {estCob === "nao_calculado" && (
+        <div className="mb-3"><Nota tipo="aviso">
+          Sem dado: o indicador de cobertura municipal de {agr} não foi calculado ou não foi carregado nesta leitura.
+          Isto não significa que não haja sequência depositada.
+        </Nota></div>
+      )}
+      {estCob === "so_sem_dado" && (
+        <div className="mb-3"><Nota tipo="aviso">
+          Sem dado em todos os municípios neste trimestre: o indicador foi calculado, mas nenhum município tem valor
+          (sem casos notificados ou sequência do RN sem município identificável). Nenhum zero foi observado.
         </Nota></div>
       )}
       {dados.malha ? (verTabela
