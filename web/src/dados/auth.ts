@@ -5,46 +5,60 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { enviar, registrar } from "./telemetria";
+import { situacaoDoPerfil, type Perfil, type Situacao } from "./situacao";
 
-export interface Perfil {
-  user_id: string;
-  email: string;
-  nome: string | null;
-  administrador: boolean;
-  ativo: boolean;
-  vinculos: { papel: string; organizacao: string; tipo: string }[];
-}
+export type { Perfil, Situacao };
+
 
 const URL_SUPABASE = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
 export function useSessao() {
   const [sessao, setSessao] = useState<Session | null>(null);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
-  const [pronto, setPronto] = useState(!supabase);
-  const [perfilDe, setPerfilDe] = useState<string | null>(null);   // de qual usuário é o perfil lido
+  const [lida, setLida] = useState(!supabase);   // getSession já respondeu
+  const [situacao, setSituacao] = useState<Situacao>(supabase ? "carregando" : "ok");
+  const [perfilDe, setPerfilDe] = useState<string | null>(null);   // de qual usuário é a situação lida
+  const [tentativa, setTentativa] = useState(0);
+  const [desativada, setDesativada] = useState(false);   // sessão encerrada por conta desativada
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => { setSessao(data.session); if (!data.session) setPronto(true); });
+    supabase.auth.getSession().then(({ data }) => { setSessao(data.session); setLida(true); });
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setSessao(s));
     return () => data.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!supabase || !sessao) { setPerfil(null); return; }
+    if (!supabase || !sessao) { setPerfil(null); setPerfilDe(null); return; }
     let vivo = true;
-    supabase.rpc("meu_perfil").then(({ data }) => {
+    const uid = sessao.user.id;
+    supabase.rpc("meu_perfil").then(({ data, error }) => {
       if (!vivo) return;
-      const p = (data as Perfil | null) ?? null;
-      // conta desativada pelo administrador: encerra a sessão que ainda estiver aberta
-      if (p && !p.ativo) { void supabase?.auth.signOut(); setPerfil(null); }
-      else setPerfil(p);
-    }).then(() => { if (vivo) { setPronto(true); setPerfilDe(sessao.user.id); } },
-            () => { if (vivo) { setPronto(true); setPerfilDe(sessao.user.id); } });
+      const p = error ? null : ((data as Perfil | null) ?? null);
+      const s = situacaoDoPerfil(p, !!error);
+      if (s === "desativado") { setDesativada(true); void supabase?.auth.signOut(); }   // encerra a sessão aberta
+      setPerfil(s === "ok" ? p : null);
+      setSituacao(s);
+      setPerfilDe(uid);
+    }, () => {
+      if (!vivo) return;
+      setPerfil(null); setSituacao("erro"); setPerfilDe(uid);
+    });
     return () => { vivo = false; };
-  }, [sessao?.user.id]);
+  }, [sessao?.user.id, tentativa]);
 
-  return { sessao, perfil, pronto: pronto && (!sessao || perfilDe === sessao.user.id) };
+  let atual: Situacao;
+  if (!supabase) atual = "ok";
+  else if (!lida) atual = "carregando";
+  else if (!sessao) atual = desativada ? "desativado" : "sem_sessao";   // mostra o motivo, não só o login
+  else if (perfilDe !== sessao.user.id) atual = "carregando";
+  else atual = situacao;
+
+  return {
+    sessao, perfil: atual === "ok" ? perfil : null, situacao: atual,
+    pronto: atual !== "carregando",
+    tentarDeNovo: () => { setDesativada(false); setPerfilDe(null); setTentativa((n) => n + 1); },
+  };
 }
 
 export async function entrar(email: string, senha: string): Promise<string | null> {
