@@ -148,7 +148,7 @@ export default function App() {
           <p className="max-w-3xl opacity-90">
             Dados atualizados automaticamente, com a origem e a data de cada número visíveis. InfoDengue é semanal;
             sequências públicas chegam por lote, com defasagem de semanas a meses. Nenhum alerta se confirma sozinho:
-            todo alerta passa por revisão humana. Projeto de doutorado em Bioinformática, UFERSA.
+            todo alerta passa por revisão humana. Projeto de doutorado em Bioinformática, UFRN/IMD.
           </p>
         </div>
       </footer>

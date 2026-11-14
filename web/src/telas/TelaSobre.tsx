@@ -44,7 +44,7 @@ export function TelaSobre({ dados }: Ctx) {
       </Secao>
       <Secao titulo="Sobre o projeto">
         <p className="max-w-prose text-sm">
-          VigiGen é o artefato de uma tese de doutorado em Bioinformática na UFERSA, construída com Design Science Research.
+          VigiGen é o artefato de uma tese de doutorado em Bioinformática na UFRN/IMD, construída com Design Science Research.
           A interface segue o Padrão Digital de Governo (gov.br Design System 3.7.0); a marca é a do próprio VigiGen. Painel gerado em {fmtDataHora(r.gerado_em)}.
         </p>
       </Secao>

@@ -19,7 +19,7 @@ DATA = RAIZ / "data"
 RAW = DATA / "raw"
 PROCESSED = DATA / "processed"
 REFERENCE = DATA / "reference"
-USER_AGENT = "VigiGen/0.1 (UFERSA; pesquisa de doutorado)"
+USER_AGENT = "VigiGen/0.1 (UFRN/IMD; pesquisa de doutorado)"
 
 
 @dataclass

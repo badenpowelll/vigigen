@@ -5,7 +5,7 @@ Integra sequências genômicas de arbovírus a dados de notificação e de
 território, e converte isso em indicadores e alertas para secretarias
 municipais. Caso de uso: dengue, chikungunya e Zika no Rio Grande do Norte.
 
-Este código sustenta um projeto de doutorado em Bioinformática (UFERSA). O
+Este código sustenta um projeto de doutorado em Bioinformática (UFRN/IMD). O
 método é Design Science Research: o artefato é construído e avaliado, e a
 avaliação precisa ser reproduzível por terceiros.
 

@@ -4,7 +4,7 @@ Vigilância genômica integrada para a gestão municipal de saúde. Junta casos
 semanais de arboviroses (InfoDengue), sequências públicas de vírus dengue
 (GenBank) e o território (IBGE) em indicadores e alertas para secretarias
 municipais do Rio Grande do Norte. Artefato da tese de doutorado em
-Bioinformática de Baden (UFERSA), construído com Design Science Research.
+Bioinformática de Baden (UFRN/IMD), construído com Design Science Research.
 
 Os dados não são instantâneos: são atualizados automaticamente, com a origem e
 a data de cada número visíveis.

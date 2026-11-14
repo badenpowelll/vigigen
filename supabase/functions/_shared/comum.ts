@@ -3,7 +3,7 @@
 // antes de qualquer transformação (a transformação é feita no banco).
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2.45.4";
 
-export const USER_AGENT = "VigiGen/0.1 (UFERSA; pesquisa de doutorado)";
+export const USER_AGENT = "VigiGen/0.1 (UFRN/IMD; pesquisa de doutorado)";
 
 export function cliente(): SupabaseClient {
   return createClient(
