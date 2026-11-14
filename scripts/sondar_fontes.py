@@ -53,6 +53,9 @@ def chamar(nome: str, url: str, params: dict | None = None, timeout: int = 120, 
         corpo = b""
         item = {"nome": nome, "url": url, "params": params, "erro": repr(e)[:500], "obtido_em": agora(),
                 "segundos": round(time.time() - t0, 2)}
+    # o começo da resposta do SINAN tem dado pessoal: nunca vai para log nem artefato
+    if "/arboviroses/" in url and (params or {}).get("campos") is None:
+        item.pop("inicio", None)
     relatorio.append(item)
     print(json.dumps({k: v for k, v in item.items() if k != "inicio"}, ensure_ascii=False))
     return item, corpo
@@ -163,9 +166,40 @@ def inmet() -> None:
             "_linhas_no_arquivo": len(linhas)})
 
 
+def campos() -> None:
+    """`campos` com a chave inteira de agregação: se responder em páginas de 1000,
+    a API devolve só colunas não pessoais e a resposta crua pode ser gravada."""
+    chave = ",".join(COLUNAS_SINAN)
+    for agravo, caminho in (("dengue", "dengue"), ("chikungunya", "chikungunya"), ("zika", "zikavirus")):
+        total, paginas = 0, 0
+        for offset in range(10):
+            item, corpo = chamar(f"campos_{agravo}_natal_2026_p{offset}", f"{DEMAS}/arboviroses/{caminho}",
+                                 {"nu_ano": "2026", "id_municip": NATAL6, "limit": "1000", "offset": str(offset),
+                                  "campos": chave}, timeout=180)
+            item.pop("inicio", None)
+            if item.get("status_http") != 200:
+                break
+            regs = next(iter(json.loads(corpo).values()), [])
+            item["registros"] = len(regs)
+            item["colunas"] = sorted({k for r in regs for k in r})
+            total += len(regs)
+            paginas += 1
+            if offset == 0 and agravo == "dengue":
+                gravar("FIXTURE_demas_campos_dengue_natal_2026_p0.json", {
+                    "_fonte": "API DEMAS (Ministério da Saúde), swagger v1.8.32, parâmetro campos",
+                    "_url": item["url"], "_obtido_em": item["obtido_em"], "_status_http": item["status_http"],
+                    "_sha256_resposta": item["sha256"], "_bytes_resposta": item["bytes"],
+                    "_nota": "Resposta real inteira; com `campos` a API só devolve as colunas pedidas.",
+                    "resposta": json.loads(corpo)})
+            if len(regs) < 1000:
+                break
+        relatorio.append({"nome": f"volume_campos_{agravo}_natal_2026", "registros": total, "paginas": paginas})
+
+
 def main() -> None:
     SAIDA.mkdir(parents=True, exist_ok=True)
-    for etapa in (sinan, cnes, inmet):
+    etapas = {"campos": (campos,)}.get(sys.argv[1] if len(sys.argv) > 1 else "", (sinan, cnes, inmet))
+    for etapa in etapas:
         try:
             etapa()
         except Exception as e:  # noqa: BLE001
