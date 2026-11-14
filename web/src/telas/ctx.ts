@@ -8,6 +8,7 @@ export interface Ctx {
   nomeSel: string;
   serieMun: Serie | null;
   setG: (g: number | null) => void;
+  setDoenca?: (d: Doenca) => void;
   irPara: (aba: "visao" | "serie" | "mapa" | "alertas" | "qualidade" | "perfil" | "relatorios" | "sobre") => void;
 }
 
