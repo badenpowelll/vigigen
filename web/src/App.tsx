@@ -11,6 +11,7 @@ import { TelaAlertas } from "./telas/TelaAlertas";
 import { TelaQualidade } from "./telas/TelaQualidade";
 import { TelaPerfil } from "./telas/TelaPerfil";
 import { TelaSobre } from "./telas/TelaSobre";
+import { TelaRelatorios } from "./telas/TelaRelatorios";
 import type { Ctx } from "./telas/ctx";
 
 const ABAS = [
@@ -20,6 +21,7 @@ const ABAS = [
   { id: "alertas", r: "Alertas" },
   { id: "qualidade", r: "Qualidade do dado" },
   { id: "perfil", r: "Perfil do município" },
+  { id: "relatorios", r: "Relatórios" },
   { id: "sobre", r: "Fontes e método" },
 ] as const;
 type Aba = (typeof ABAS)[number]["id"];
@@ -127,6 +129,7 @@ export default function App() {
             {aba === "alertas" && <TelaAlertas {...ctx} />}
             {aba === "qualidade" && <TelaQualidade {...ctx} />}
             {aba === "perfil" && <TelaPerfil {...ctx} />}
+            {aba === "relatorios" && <TelaRelatorios {...ctx} />}
             {aba === "sobre" && <TelaSobre {...ctx} />}
           </main>
         )}

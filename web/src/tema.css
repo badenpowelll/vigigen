@@ -242,3 +242,19 @@ a { color: var(--interactive); }
 }
 :root[data-theme="dark"] .br-message.info { --message-background: var(--blue-warm-vivid-80); --message-text: var(--pure-0); --message-color-icon: var(--blue-warm-vivid-30); }
 :root[data-theme="dark"] .br-message.warning { --message-background: #3a3000; --message-text: var(--pure-0); --message-color-icon: var(--yellow-vivid-20); }
+
+/* Relatórios: tabela da prévia e impressão só do relatório escolhido */
+.tabela-relatorio { border-collapse: collapse; }
+.tabela-relatorio th { padding: 6px 10px; border-bottom: 2px solid var(--borda); font-weight: 600; white-space: nowrap; }
+.tabela-relatorio td { padding: 5px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+.so-impressao { display: none; }
+@media print {
+  body.imprimindo-relatorio * { visibility: hidden; }
+  body.imprimindo-relatorio #area-impressao, body.imprimindo-relatorio #area-impressao * { visibility: visible; }
+  body.imprimindo-relatorio #area-impressao { position: absolute; left: 0; top: 0; width: 100%; }
+  body.imprimindo-relatorio .sem-impressao { display: none !important; }
+  body.imprimindo-relatorio .so-impressao { display: table-row; }
+  body.imprimindo-relatorio .overflow-x-auto { overflow: visible; }
+  body.imprimindo-relatorio #area-impressao .cartao { box-shadow: none; border: 0; }
+  body.imprimindo-relatorio .tabela-relatorio { font-size: 9pt; }
+}
