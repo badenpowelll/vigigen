@@ -37,7 +37,7 @@ avaliação precisa ser reproduzível por terceiros.
 - Ingestão local/reprodutível: CLI Python 3.11+ em `src/ingest/`
   (`python -m src.ingest --fonte ...`), mesmos endpoints, grava em `data/raw/`.
 - Node 20+ e React + TypeScript + Vite + Tailwind para o painel (`web/`).
-  Visual segue o Padrão Digital de Governo (gov.br Design System 3.x): tokens
+  Visual segue o Padrão Digital de Governo (gov.br Design System 3.7.0, pacote @govbr-ds/core): tokens
   de cor, tipografia Rawline (Raleway como substituta) e superfícies; a marca
   do VigiGen continua a própria, sem a marca gov.br (D-014).
 - Nextclade CLI para classificação de sorotipo e linhagem (`src/pipeline/`),

@@ -43,7 +43,7 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
       acoes={<>
         <Alternador rotulo="Camada do mapa" valor={camada} aoMudar={setCamada}
           opcoes={[{ v: "incidencia", r: "Incidência" }, { v: "casos", r: "Casos" }, { v: "cobertura", r: "Cobertura genômica" }]} />
-        <button className="rounded-pilula border border-borda px-3 py-1 text-sm font-semibold" aria-pressed={verTabela} onClick={() => setVerTabela((x) => !x)}>
+        <button type="button" className="br-button secondary small" aria-pressed={verTabela} onClick={() => setVerTabela((x) => !x)}>
           {verTabela ? "Ver mapa" : "Ver como tabela"}
         </button>
       </>}>

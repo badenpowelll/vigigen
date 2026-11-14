@@ -17,9 +17,9 @@ export function TelaSobre({ dados }: Ctx) {
           {FONTES.map((f) => {
             const st = r.fontes?.[f.id];
             return (
-              <li key={f.id} className="rounded-xl border border-borda p-3">
+              <li key={f.id} className="rounded-[var(--raio)] border border-borda p-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <a href={f.url} target="_blank" rel="noreferrer" className="font-semibold text-destaque underline">{f.nome}</a>
+                  <a href={f.url} target="_blank" rel="noreferrer" className="font-semibold underline">{f.nome}</a>
                   <span className="num text-xs text-suave">
                     {st ? `última carga ${fmtDataHora(st.finalizado_em)} · ${fmtNum(st.registros)} registros` : "sem carga concluída"}
                     {r.em_andamento.includes(f.id) ? " · carga em andamento" : ""}

@@ -159,10 +159,10 @@ export function Secao({ titulo, subtitulo, acoes, children, id }: { titulo: stri
 export function Alternador<T extends string>({ opcoes, valor, aoMudar, rotulo }:
   { opcoes: { v: T; r: string }[]; valor: T; aoMudar: (v: T) => void; rotulo: string }) {
   return (
-    <div role="radiogroup" aria-label={rotulo} className="inline-flex flex-wrap rounded-pilula border border-borda bg-[var(--superficie-2)] p-0.5">
+    <div role="radiogroup" aria-label={rotulo} className="inline-flex flex-wrap gap-2">
       {opcoes.map((o) => (
-        <button key={o.v} role="radio" aria-checked={valor === o.v} onClick={() => aoMudar(o.v)}
-          className={`rounded-pilula px-3 py-1 text-sm font-semibold transition-colors ${valor === o.v ? "bg-imd text-white" : "text-suave hover:text-texto"}`}>
+        <button key={o.v} type="button" role="radio" aria-checked={valor === o.v} onClick={() => aoMudar(o.v)}
+          className={`br-button small ${valor === o.v ? "primary" : "secondary"}`}>
           {o.r}
         </button>
       ))}
@@ -170,10 +170,23 @@ export function Alternador<T extends string>({ opcoes, valor, aoMudar, rotulo }:
   );
 }
 
+/* Nota = br-message do gov.br DS (info ou warning), com ícone em SVG próprio
+   no lugar do Font Awesome, para não carregar uma fonte de ícones inteira. */
 export function Nota({ children, tipo = "info" }: { children: ReactNode; tipo?: "info" | "aviso" }) {
+  const aviso = tipo === "aviso";
   return (
-    <div className={`rounded-xl border px-3 py-2 text-sm ${tipo === "aviso" ? "border-[var(--estado-2)] bg-[color-mix(in_srgb,var(--estado-2)_10%,transparent)]" : "border-borda bg-[var(--superficie-2)]"}`}>
-      {children}
+    <div className={`br-message ${aviso ? "warning" : "info"} nota`}>
+      <div className="icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24">
+          {aviso
+            ? <><path d="M12 2.5 22.5 21h-21Z" fill="currentColor" /><path d="M12 9v5.5M12 17.2v.3" stroke="var(--warning-alternative)" strokeWidth="2.4" strokeLinecap="round" /></>
+            : <><circle cx="12" cy="12" r="10" fill="currentColor" /><path d="M12 11v6M12 7.2v.3" stroke="var(--info-alternative)" strokeWidth="2.4" strokeLinecap="round" /></>}
+        </svg>
+      </div>
+      <div className="content" role={aviso ? "alert" : undefined}>
+        <span className="message-title">{aviso ? "Atenção. " : "Informação. "}</span>
+        <span className="message-body">{children}</span>
+      </div>
     </div>
   );
 }

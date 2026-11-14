@@ -77,7 +77,7 @@ export function TelaQualidade({ dados }: Ctx) {
             <tbody>
               {r.sequencias_rn.map((s) => (
                 <tr key={s.acc} className="border-t border-borda">
-                  <td className="py-1 pr-3"><a className="font-mono text-destaque underline" href={`https://www.ncbi.nlm.nih.gov/nuccore/${s.acc}`} target="_blank" rel="noreferrer">{s.acc}</a></td>
+                  <td className="py-1 pr-3"><a className="font-mono underline" href={`https://www.ncbi.nlm.nih.gov/nuccore/${s.acc}`} target="_blank" rel="noreferrer">{s.acc}</a></td>
                   <td className="py-1 pr-3">{s.soro ?? "não declarado"}</td>
                   <td className="num py-1 pr-3">{s.coleta ?? "—"}</td>
                   <td className="py-1 pr-3">{s.geo ?? "—"}</td>

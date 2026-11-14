@@ -99,15 +99,15 @@ export default function App() {
       <div className="gutter mx-auto max-w-7xl py-4">
         <div className="mb-4 flex flex-wrap items-end gap-3">
           <label className="flex min-w-0 flex-col gap-1">
-            <span className="rotulo">Território</span>
+            <span className="br-rotulo">Território</span>
             <select value={g ?? ""} onChange={(e) => ctx.setG(e.target.value ? Number(e.target.value) : null)}
-              className="max-w-full rounded-pilula border border-borda bg-superficie px-4 py-1.5 text-sm font-semibold">
+              className="br-campo max-w-full">
               <option value="">Rio Grande do Norte (estado)</option>
               {municipios.map((m) => <option key={m.g} value={m.g}>{m.n}</option>)}
             </select>
           </label>
           <div className="flex flex-col gap-1">
-            <span className="rotulo">Agravo</span>
+            <span className="br-rotulo">Agravo</span>
             <Alternador rotulo="Agravo" valor={doenca} aoMudar={(d) => { setDoenca(d); registrarUso(`doenca:${d}`); }}
               opcoes={DOENCAS.map((d) => ({ v: d, r: DOENCA_ROTULO[d] }))} />
           </div>
@@ -131,12 +131,20 @@ export default function App() {
           </main>
         )}
 
-        <footer className="mt-8 border-t border-borda pt-4 text-xs text-suave">
-          Dados atualizados automaticamente, com a origem e a data de cada número visíveis. InfoDengue é semanal;
-          sequências públicas chegam por lote, com defasagem de semanas a meses. Nenhum alerta se confirma sozinho:
-          todo alerta passa por revisão humana. Projeto de doutorado em Bioinformática, UFERSA.
-        </footer>
       </div>
+      <footer className="br-rodape mt-8">
+        <div className="gutter mx-auto flex max-w-7xl flex-col gap-3 py-6 text-sm sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-center gap-3">
+            <Marca variante="escuro" className="h-8 w-auto" />
+            <span className="font-bold">VigiGen</span>
+          </div>
+          <p className="max-w-3xl opacity-90">
+            Dados atualizados automaticamente, com a origem e a data de cada número visíveis. InfoDengue é semanal;
+            sequências públicas chegam por lote, com defasagem de semanas a meses. Nenhum alerta se confirma sozinho:
+            todo alerta passa por revisão humana. Projeto de doutorado em Bioinformática, UFERSA.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

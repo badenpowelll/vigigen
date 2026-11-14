@@ -1,4 +1,4 @@
-/* VigiGen — tema único, no Padrão Digital de Governo (gov.br DS).
+/* VigiGen — tema único, no Padrão Digital de Governo (gov.br DS 3.7.0).
    Layout: cabeçalho institucional em azul IMD; grade de 6 KPIs, depois mapa
    e série; alertas na lateral; uma coluna no celular, KPIs primeiro.
    Três paletas com funções que nunca se misturam:
@@ -11,7 +11,7 @@
 @tailwind utilities;
 
 :root {
-  /* Padrão Digital de Governo (gov.br Design System 3.x). Os nomes das
+  /* Padrão Digital de Governo (gov.br Design System 3.7.0, conferido com @govbr-ds/core). Os nomes das
      variáveis ficaram os mesmos (--imd etc.) para não mexer nos componentes;
      os valores agora são os tokens do gov.br, citados ao lado. */
   --imd: #1351b4;          /* blue-warm-vivid-70: cor primária */
@@ -60,8 +60,8 @@
   --mag-nulo: #e6e6e6;     /* gray-10 */
   --mag-traco: #ffffff;
 
-  --raio: 8px;             /* surface-rounder-md */
-  --sombra: 0 1px 6px rgba(0, 0, 0, 0.16); /* surface-shadow-sm */
+  --raio: var(--surface-rounder-md); /* 8px */
+  --sombra: var(--surface-shadow-sm);
   color-scheme: light;
 }
 
@@ -103,6 +103,18 @@
     --mag-nulo: #0a2858;
     --mag-traco: #071d41;
     --sombra: 0 1px 6px rgba(0, 0, 0, 0.4);
+    /* componentes gov.br no modo escuro (equivalente à classe dark-mode do DS) */
+    --background: var(--background-dark);
+    --color: var(--color-dark);
+    --color-rgb: var(--color-dark-rgb);
+    --text-color: var(--color-dark);
+    --interactive: var(--interactive-dark);
+    --interactive-rgb: var(--interactive-dark-rgb);
+    --hover: var(--hover-dark);
+    --pressed: var(--pressed-dark);
+    --focus-color: var(--focus-color-dark);
+    --focus: var(--focus-color-dark);
+    --border-color-alternative: var(--blue-warm-vivid-30);
     color-scheme: dark;
   }
 }
@@ -143,6 +155,18 @@
   --mag-nulo: #0a2858;
   --mag-traco: #071d41;
   --sombra: 0 1px 6px rgba(0, 0, 0, 0.4);
+  /* componentes gov.br no modo escuro (equivalente à classe dark-mode do DS) */
+  --background: var(--background-dark);
+  --color: var(--color-dark);
+  --color-rgb: var(--color-dark-rgb);
+  --text-color: var(--color-dark);
+  --interactive: var(--interactive-dark);
+  --interactive-rgb: var(--interactive-dark-rgb);
+  --hover: var(--hover-dark);
+  --pressed: var(--pressed-dark);
+  --focus-color: var(--focus-color-dark);
+  --focus: var(--focus-color-dark);
+  --border-color-alternative: var(--blue-warm-vivid-30);
   color-scheme: dark;
 }
 
@@ -174,8 +198,47 @@ h1, h2, h3 { text-wrap: balance; }
   font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--texto-suave); font-weight: 600;
 }
-:focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; border-radius: 6px; }
+:focus-visible { outline: var(--focus-width) var(--focus-style) var(--focus); outline-offset: var(--focus-offset); }
+a { color: var(--interactive); }
+
+/* br-button primário no escuro: o DS usa a variante inverted */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .br-button.primary { --interactive-rgb: var(--background-dark-rgb); background-color: var(--interactive-dark); color: var(--background-dark); }
+  :root:not([data-theme="light"]) .br-button.secondary { background-color: var(--background-dark); }
+}
+:root[data-theme="dark"] .br-button.primary { --interactive-rgb: var(--background-dark-rgb); background-color: var(--interactive-dark); color: var(--background-dark); }
+:root[data-theme="dark"] .br-button.secondary { background-color: var(--background-dark); }
+
+/* Campo de seleção no padrão do br-input (o br-select do DS depende de JS) */
+.br-campo {
+  height: 40px; padding: 0 var(--spacing-scale-5x) 0 var(--spacing-scale-2x);
+  border: var(--border-width) var(--border-style) var(--border-color-alternative);
+  border-radius: var(--surface-rounder-sm);
+  background-color: var(--superficie); color: var(--texto);
+  font-size: var(--font-size-scale-up-01); font-weight: var(--font-weight-medium);
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--interactive) 50%), linear-gradient(135deg, var(--interactive) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 17px, calc(100% - 16px) 17px;
+  background-size: 6px 6px; background-repeat: no-repeat;
+}
+.br-campo:hover { background-color: var(--superficie-2); }
+.br-rotulo { font-size: var(--font-size-scale-base); font-weight: var(--font-weight-semi-bold); color: var(--texto); }
+
+/* Rodapé no padrão br-footer: fundo blue-warm-vivid-90, texto claro */
+.br-rodape { background: var(--blue-warm-vivid-90); color: var(--pure-0); }
+.br-rodape a { color: var(--blue-warm-20); }
 .hachura { fill: url(#hachura-sem-dado); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* br-message dentro do painel: sem a margem inferior padrão, texto no tamanho do painel */
+.br-message.nota { margin-bottom: 0; border-radius: var(--surface-rounder-sm); }
+.br-message.nota .content { font-size: var(--font-size-scale-base); padding-top: var(--spacing-scale-2x); padding-bottom: var(--spacing-scale-2x); }
+.br-message.nota .icon { margin-top: var(--spacing-scale-2x); margin-bottom: auto; align-self: flex-start; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .br-message.info { --message-background: var(--blue-warm-vivid-80); --message-text: var(--pure-0); --message-color-icon: var(--blue-warm-vivid-30); }
+  :root:not([data-theme="light"]) .br-message.warning { --message-background: #3a3000; --message-text: var(--pure-0); --message-color-icon: var(--yellow-vivid-20); }
+}
+:root[data-theme="dark"] .br-message.info { --message-background: var(--blue-warm-vivid-80); --message-text: var(--pure-0); --message-color-icon: var(--blue-warm-vivid-30); }
+:root[data-theme="dark"] .br-message.warning { --message-background: #3a3000; --message-text: var(--pure-0); --message-color-icon: var(--yellow-vivid-20); }

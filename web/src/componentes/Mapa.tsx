@@ -41,7 +41,7 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
 
   return (
     <figure className="min-w-0">
-      <div className="relative overflow-hidden rounded-xl border border-borda bg-[var(--superficie-2)]">
+      <div className="relative overflow-hidden rounded-[var(--raio)] border border-borda bg-[var(--superficie-2)]">
         <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="group" aria-label={titulo}>
           <defs>
             <pattern id="hachura-sem-dado" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -75,7 +75,7 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
           ))}
         </svg>
         {infoAtivo && (
-          <div className="pointer-events-none absolute left-2 top-2 max-w-[70%] rounded-lg border border-borda bg-superficie/95 px-3 py-1.5 text-sm shadow">
+          <div className="pointer-events-none absolute left-2 top-2 max-w-[70%] rounded-[var(--surface-rounder-sm)] border border-borda bg-superficie/95 px-3 py-1.5 text-sm shadow">
             <strong>{infoAtivo.n}</strong>
             <div className="num text-suave">
               {valAtivo && valAtivo.v !== null ? `${formatar(valAtivo.v)} ${unidade}` : `sem dado${valAtivo?.motivo ? `: ${valAtivo.motivo}` : ""}`}
@@ -130,7 +130,7 @@ export function limitesQuantis(vals: number[], k = 5): number[] {
 
 export function TabelaMapa({ linhas, unidade }: { linhas: { n: string; v: number | null; motivo?: string }[]; unidade: string }) {
   return (
-    <div className="max-h-80 overflow-auto rounded-xl border border-borda">
+    <div className="max-h-80 overflow-auto rounded-[var(--raio)] border border-borda">
       <table className="w-full text-sm">
         <caption className="sr-only">Tabela alternativa ao mapa</caption>
         <thead className="sticky top-0 bg-[var(--superficie-2)] text-left">

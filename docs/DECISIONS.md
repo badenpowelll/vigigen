@@ -107,3 +107,15 @@ substituta. Valores conferidos no `core.css` 3.0.0 do GOVBR-DS servido pela
 Receita Federal; amarelo (#ffcd07) e vermelho (#e52207) de alerta não
 puderam ser conferidos nessa leitura. A marca do VigiGen continua a própria:
 o painel não usa a marca gov.br, porque não é um serviço do governo federal.
+**Complemento (14/11/2026).** Baden autorizou trocar todas as cores e botões.
+O painel passa a depender do pacote oficial `@govbr-ds/core` 3.7.0 (MIT, npm),
+do qual importa só `core-tokens` e os componentes `br-button` e `br-message`,
+sem o reset global, que brigaria com o Tailwind. Todos os tokens acima foram
+reconferidos na 3.7.0, inclusive o amarelo e o vermelho. Botões e
+alternadores viram `br-button` (primário e secundário, tamanho small), notas
+viram `br-message` (info e warning, com ícone SVG próprio no lugar do Font
+Awesome), o seletor de território segue as medidas do `br-input` (o
+`br-select` do DS depende de JS), o foco usa o padrão do DS (tracejado de
+4 px, `gold-vivid-40`) e o rodapé segue o `br-footer` (fundo
+`blue-warm-vivid-90`). No escuro, as variáveis equivalem à classe
+`dark-mode` do DS.

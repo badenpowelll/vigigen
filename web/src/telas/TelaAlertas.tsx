@@ -37,17 +37,17 @@ export function TelaAlertas({ dados, g, nomeSel }: Ctx) {
         ) : (
           <ul className="flex flex-col gap-2">
             {lista.map((a) => (
-              <li key={a.id} className="rounded-xl border border-borda p-3">
+              <li key={a.id} className="rounded-[var(--raio)] border border-borda p-3">
                 <div className="flex flex-wrap justify-between gap-2">
                   <strong>{a.tipo}</strong>
                   <span className="text-sm font-semibold">{STATUS[a.status]}</span>
                 </div>
                 <p className="text-sm text-suave">Período {a.p} · criado {fmtDataHora(a.criado)}{a.rev ? ` · revisado ${fmtDataHora(a.rev)}` : ""}</p>
-                <pre className="mt-2 overflow-x-auto rounded-lg bg-[var(--superficie-2)] p-2 text-xs">{JSON.stringify(a.ev, null, 2)}</pre>
+                <pre className="mt-2 overflow-x-auto rounded-[var(--surface-rounder-sm)] bg-[var(--superficie-2)] p-2 text-xs">{JSON.stringify(a.ev, null, 2)}</pre>
                 {podeRevisar && a.status !== "confirmado" && a.status !== "descartado" && (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {(["em_analise", "confirmado", "descartado"] as const).map((s) => (
-                      <button key={s} className="rounded-pilula border border-borda px-3 py-1 text-sm font-semibold"
+                      <button key={s} type="button" className={`br-button small ${s === "confirmado" ? "primary" : "secondary"}`}
                         onClick={() => revisarAlerta(a.id, s).catch((e) => setErro(String(e.message ?? e)))}>{STATUS[s]}</button>
                     ))}
                   </div>

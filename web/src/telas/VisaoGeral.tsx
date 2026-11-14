@@ -83,7 +83,7 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
         <KpiCard titulo="Alertas de mudança de linhagem" periodo="Fase 1" fonte={{ nome: "VigiGen (Nextclade)", atualizado: `${fmtNum(r.classificacao.total)} sequências classificadas` }}
           valor={r.classificacao.total === 0 ? null : fmtNum(alertasAqui.length)}
           semDadoMotivo="a classificação por Nextclade ainda não rodou; sem ela não há como detectar mudança de linhagem (isto não é zero)"
-          rodapeExtra={<button className="font-semibold text-destaque underline" onClick={() => irPara("alertas")}>ver por quê</button>} />
+          rodapeExtra={<button type="button" className="br-button small" style={{ padding: "0 8px", marginLeft: "-8px" }} onClick={() => irPara("alertas")}>ver por quê</button>} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
