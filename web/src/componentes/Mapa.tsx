@@ -213,17 +213,15 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
           <button type="button" aria-label="Ver o mapa inteiro" title="Mapa inteiro (0)" onClick={() => setVista(VISTA0)} disabled={vista.k === 1}>⟲</button>
         </div>
         {aviso && <div className="mapa-aviso" role="status">{aviso}</div>}
-        {infoAtivo && (
-          <div className={`pointer-events-none absolute left-2 top-2 max-w-[70%] rounded-[var(--surface-rounder-sm)] border border-borda bg-superficie/95 px-3 py-1.5 shadow ${compacto ? "text-xs" : "text-sm"}`}>
-            <strong>{infoAtivo.n}</strong>
-            <div className="num text-suave">
-              {valAtivo && valAtivo.v !== null ? `${formatar(valAtivo.v)} ${unidade}` : `sem dado${valAtivo?.motivo ? `: ${valAtivo.motivo}` : ""}`}
-            </div>
-            {valAtivo?.detalhe && <div className="text-xs text-suave">{valAtivo.detalhe}</div>}
-            {!compacto && <div className="text-xs text-suave">Clique para selecionar o município no painel</div>}
-          </div>
-        )}
       </div>
+      {/* Informação do município fora do mapa: não cobre polígonos em nenhum tamanho de tela */}
+      <p className={`mapa-info mt-1 flex min-h-5 flex-wrap items-baseline gap-x-2 leading-tight ${compacto ? "text-xs" : "text-sm"}`}>
+        {infoAtivo ? (<>
+          <strong>{infoAtivo.n}</strong>
+          <span className="num">{valAtivo && valAtivo.v !== null ? `${formatar(valAtivo.v)} ${unidade}` : `sem dado${valAtivo?.motivo ? `: ${valAtivo.motivo}` : ""}`}</span>
+          {valAtivo?.detalhe && <span className="text-suave">· {valAtivo.detalhe}</span>}
+        </>) : <span className="text-suave">{compacto ? "Passe o mouse ou toque num município" : "Passe o mouse ou toque num município para ver os números; clique para selecioná-lo no painel."}</span>}
+      </p>
       <figcaption className="mt-2 outline-none" tabIndex={-1}>
         <Legenda limites={limites} formatar={formatar} unidade={unidade} cores={CLASSES} />
         {aoSelecionarEstado && !compacto && (
