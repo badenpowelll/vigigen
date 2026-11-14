@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDados } from "./dados/useDados";
 import type { Doenca, Serie } from "./dados/tipos";
 import { DOENCAS } from "./dados/tipos";
@@ -13,6 +13,7 @@ import { TelaPerfil } from "./telas/TelaPerfil";
 import { TelaSobre } from "./telas/TelaSobre";
 import { TelaRelatorios } from "./telas/TelaRelatorios";
 import { Sininho } from "./componentes/Sininho";
+import { Atalhos, SeletorTema } from "./componentes/Acessibilidade";
 import type { Ctx } from "./telas/ctx";
 
 const ABAS = [
@@ -67,12 +68,37 @@ export default function App() {
   useEffect(() => { registrarUso(`aba:${aba}`); }, [aba]);
 
   const irPara = (a: Aba) => { setAba(a); try { history.replaceState(null, "", `#${a}`); } catch { /* sandbox */ } };
+  const conteudo = useRef<HTMLElement>(null);
+  const seletorMun = useRef<HTMLSelectElement>(null);
+  const [anuncio, setAnuncio] = useState("");
+
+  // Atalhos de teclado com Alt+Shift (WCAG 2.1.4: nada de atalho de uma tecla só).
+  useEffect(() => {
+    const f = (e: KeyboardEvent) => {
+      if (!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey) return;
+      const n = /^Digit([1-8])$/.exec(e.code);
+      if (n) {
+        const a = ABAS[Number(n[1]) - 1];
+        e.preventDefault(); irPara(a.id); setAnuncio(`Aba ${a.r}`);
+        requestAnimationFrame(() => conteudo.current?.focus());
+        return;
+      }
+      const ag: Record<string, Doenca> = { KeyD: "dengue", KeyC: "chikungunya", KeyZ: "zika" };
+      if (ag[e.code]) { e.preventDefault(); setDoenca(ag[e.code]); setAnuncio(`Agravo ${DOENCA_ROTULO[ag[e.code]]}`); return; }
+      if (e.code === "KeyM") { e.preventDefault(); seletorMun.current?.focus(); return; }
+      if (e.code === "KeyP") { e.preventDefault(); conteudo.current?.focus(); }
+    };
+    addEventListener("keydown", f);
+    return () => removeEventListener("keydown", f);
+  }, []);
 
   const nomeSel = g === null ? "Rio Grande do Norte" : municipios.find((m) => m.g === g)?.n ?? "—";
   const ctx: Ctx = { dados, doenca, g, nomeSel, serieMun, setG: (x) => { setG(x); registrarUso("selecao_municipio"); }, irPara };
 
   return (
     <div className="min-h-screen">
+      <a href="#conteudo" className="pular" onClick={(e) => { e.preventDefault(); conteudo.current?.focus(); }}>Pular para o conteúdo</a>
+      <p className="sr-only" aria-live="polite">{anuncio}</p>
       <header className="bg-superficie text-texto" style={{ boxShadow: "var(--sombra)" }}>
         <div className="gutter mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 py-3">
           <div className="flex items-center gap-3">
@@ -82,8 +108,10 @@ export default function App() {
               <p className="text-[0.8rem] text-suave">Vigilância genômica de arboviroses · Rio Grande do Norte</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Origem {...dados} />
+            <SeletorTema />
+            <Atalhos abas={ABAS.map((a) => a.r)} />
             <Sininho alertas={dados.resumo?.alertas ?? null} nomes={municipios} aoAbrir={() => irPara("alertas")} />
           </div>
         </div>
@@ -103,10 +131,10 @@ export default function App() {
       </header>
 
       <div className="gutter mx-auto max-w-7xl py-4">
-        <div className="mb-4 flex flex-wrap items-end gap-3">
+        <section aria-label="Filtros do painel: território e agravo" className="mb-4 flex flex-wrap items-end gap-3">
           <label className="flex min-w-0 flex-col gap-1">
             <span className="br-rotulo">Território</span>
-            <select value={g ?? ""} onChange={(e) => ctx.setG(e.target.value ? Number(e.target.value) : null)}
+            <select ref={seletorMun} value={g ?? ""} onChange={(e) => ctx.setG(e.target.value ? Number(e.target.value) : null)}
               className="br-campo max-w-full">
               <option value="">Rio Grande do Norte (estado)</option>
               {municipios.map((m) => <option key={m.g} value={m.g}>{m.n}</option>)}
@@ -117,7 +145,7 @@ export default function App() {
             <Alternador rotulo="Agravo" valor={doenca} aoMudar={(d) => { setDoenca(d); registrarUso(`doenca:${d}`); }}
               opcoes={DOENCAS.map((d) => ({ v: d, r: DOENCA_ROTULO[d] }))} />
           </div>
-        </div>
+        </section>
 
         {dados.aviso && <div className="mb-4"><Nota tipo="aviso">{dados.aviso}</Nota></div>}
         {!dados.resumo && !dados.carregando && (
@@ -126,7 +154,7 @@ export default function App() {
         {!dados.resumo && dados.carregando && <p className="text-suave">Lendo o banco do VigiGen…</p>}
 
         {dados.resumo && (
-          <main>
+          <main id="conteudo" ref={conteudo} tabIndex={-1} aria-label={`${ABAS.find((a) => a.id === aba)?.r} · ${DOENCA_ROTULO[doenca]} · ${nomeSel}`} className="outline-none focus-visible:outline-none">
             {aba === "visao" && <VisaoGeral {...ctx} />}
             {aba === "serie" && <TelaSerie {...ctx} />}
             {aba === "mapa" && <TelaMapa {...ctx} />}

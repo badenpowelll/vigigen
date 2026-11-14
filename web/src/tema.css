@@ -258,3 +258,51 @@ a { color: var(--interactive); }
   body.imprimindo-relatorio #area-impressao .cartao { box-shadow: none; border: 0; }
   body.imprimindo-relatorio .tabela-relatorio { font-size: 9pt; }
 }
+
+/* ---------- Dica (tooltip acessível) ---------- */
+.dica-botao {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 999px; color: var(--texto-suave);
+  background: transparent; border: 0; cursor: help;
+}
+.dica-botao:hover, .dica-botao[aria-expanded="true"] { color: var(--interactive); background: var(--superficie-2); }
+.dica-botao:focus-visible { outline: 3px solid var(--focus, #c2850c); outline-offset: 2px; }
+.dica-caixa {
+  position: absolute; z-index: 30; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: min(18rem, calc(100vw - 2rem));
+  padding: .5rem .75rem; border-radius: var(--surface-rounder-sm, 6px);
+  background: var(--texto); color: var(--superficie);
+  font-size: .8rem; font-weight: 400; line-height: 1.35; text-transform: none; letter-spacing: 0;
+  box-shadow: var(--surface-shadow-md);
+}
+/* Tooltip flutuante dos gráficos */
+.grafico-dica {
+  position: absolute; z-index: 20; pointer-events: none;
+  padding: .4rem .6rem; border-radius: var(--surface-rounder-sm, 6px);
+  background: var(--superficie); color: var(--texto); border: 1px solid var(--borda);
+  font-size: .78rem; line-height: 1.35; box-shadow: var(--surface-shadow-md); white-space: nowrap;
+}
+.grafico-foco:focus-visible { outline: 3px solid var(--focus, #c2850c); outline-offset: 2px; }
+/* Foco visível em tudo que é clicável no mapa */
+path[role="button"]:focus-visible { stroke: var(--focus, #c2850c); stroke-width: 3; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* ---------- Acessibilidade: pular conteúdo, tema, atalhos ---------- */
+.pular {
+  position: absolute; left: 8px; top: -60px; z-index: 50;
+  padding: .5rem 1rem; border-radius: var(--surface-rounder-sm, 6px);
+  background: var(--interactive); color: var(--pure-0, #fff); font-weight: 600;
+}
+.pular:focus { top: 8px; }
+.tema-grupo { display: inline-flex; border: 1px solid var(--borda); border-radius: 999px; padding: 2px; background: var(--superficie); }
+.tema-botao { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 999px; color: var(--texto-suave); background: transparent; border: 0; cursor: pointer; }
+.tema-botao:hover { background: var(--superficie-2); color: var(--texto); }
+.tema-botao[aria-checked="true"] { background: var(--interactive); color: var(--pure-0, #fff); }
+:root[data-theme="dark"] .tema-botao[aria-checked="true"] { background: var(--interactive-dark, #c5d4eb); color: var(--background-dark, #071d41); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tema-botao[aria-checked="true"] { background: var(--interactive-dark, #c5d4eb); color: var(--background-dark, #071d41); } }
+.atalhos-dialogo { max-width: min(36rem, calc(100vw - 2rem)); padding: 1.25rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--superficie); color: var(--texto); }
+.atalhos-dialogo::backdrop { background: rgba(0, 0, 0, .5); }
+kbd { font-family: var(--font-family-mono, monospace); font-size: .8em; padding: 1px 6px; border: 1px solid var(--borda); border-bottom-width: 2px; border-radius: 4px; background: var(--superficie-2); white-space: nowrap; }
+main:focus { outline: none; }
+.pular-mapa { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pular-mapa:focus { position: static; width: auto; height: auto; clip: auto; margin-bottom: .5rem; padding: .25rem .75rem; border-radius: 6px; background: var(--interactive); color: var(--pure-0, #fff); font-weight: 600; white-space: normal; }

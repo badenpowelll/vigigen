@@ -52,7 +52,7 @@ export function Sininho({ alertas, nomes, aoAbrir }: {
           ) : n === 0 ? (
             <p className="text-suave">Nenhum alerta aguardando revisão. O sininho só acende quando as regras de detecção gravam um alerta real no banco.</p>
           ) : (
-            <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+            <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto" tabIndex={0} aria-label="Alertas aguardando revisão">
               {pendentes.slice(0, 8).map((a) => (
                 <li key={a.id} className="border-b border-borda pb-2 last:border-0">
                   <span className="font-semibold">{nome(a.g)}</span> · {DOENCA_ROTULO[a.a ?? "dengue"]} · {a.tipo} · {fmtTrimestre(a.p)}

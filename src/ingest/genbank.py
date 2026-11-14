@@ -1,5 +1,5 @@
 """NCBI GenBank — sequências de dengue, chikungunya e Zika via E-utilities
-(esearch + efetch), um termo por agravo (D-015). Validados em 14/11/2026:
+(esearch + efetch), um termo por agravo (D-018). Validados em 14/11/2026:
 
   dengue       "Dengue virus"[Organism] AND Brazil[All Fields]       7.203
   chikungunya  "Chikungunya virus"[Organism] AND Brazil[All Fields]  1.839

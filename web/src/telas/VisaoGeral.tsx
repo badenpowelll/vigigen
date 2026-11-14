@@ -4,9 +4,17 @@ import { FONTE_GENBANK, FONTE_INFODENGUE } from "./ctx";
 import { KpiCard, Secao, StatusBadge, IconeNivel, Nota, type Nivel } from "../componentes/basicos";
 import { Mapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
 import { GraficoLinhas } from "../componentes/Graficos";
-import { agregarEstado, coberturaMunicipio, genomicaDe, posicao, ultimos, valorNaSE } from "../dados/calc";
+import { agregarEstado, atualidadeSerie, coberturaMunicipio, estadoDeteccao, genomicaDe, posicao, ultimos, valorNaSE } from "../dados/calc";
 import { ult12Retrato } from "../dados/useDados";
 import { DOENCA_ROTULO, COR_DOENCA, fmtData, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
+
+const MOTIVO_SEM_ALERTA: Record<string, string> = {
+  sem_sequencias: "as sequências deste vírus ainda não foram ingeridas; sem elas não há detecção (isto não é zero)",
+  aguardando_classificacao: "a classificação por Nextclade ainda não rodou para este vírus; sem ela não há detecção (isto não é zero)",
+  qc_insuficiente: "nenhuma sequência passou no controle de qualidade; sem classificação não há detecção (isto não é zero)",
+  deteccao_pendente: "há classificação, mas a detecção R1/R2/R3 ainda não tem execução registrada (isto não é zero)",
+  concluida_sem_alertas: "", alertas_pendentes: "", alertas_revisados: "",
+};
 
 export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }: Ctx) {
   const sem = dados.semana[doenca];
@@ -25,7 +33,9 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
   const gen = genomicaDe(dados.resumo, doenca);
   const cob = gen.estado === "ok" ? coberturaMunicipio(gen.r, g) : null;
   const r = dados.resumo!;
-  const alertasAqui = r.alertas.filter((a) => g === null || a.g === g);
+  // alertas e classificações filtrados por agravo E território (nunca o total global)
+  const det = estadoDeteccao(r, doenca, g);
+  const atual = atualidadeSerie(sem?.se);
 
   const valoresMapa = useMemo(() => {
     const mp = new Map<number, ValorMapa>();
@@ -43,19 +53,28 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
   return (
     <div className="flex flex-col gap-4">
       <h2 className="sr-only">Visão geral de {nomeSel}</h2>
-      {sem?.se && seMax && sem.se < seMax && (
+      {(atual.estado === "atrasada" || atual.estado === "parada") && (
+        <Nota tipo="aviso">
+          {atual.estado === "parada" ? <strong>Série parada. </strong> : <strong>Série atrasada. </strong>}
+          A última semana publicada pelo InfoDengue para {DOENCA_ROTULO[doenca]} no RN é a {fmtSE(sem?.se)}, {atual.semanas} semanas antes da semana corrente
+          {seMax && sem?.se && sem.se < seMax ? ` (os outros agravos já chegam à ${fmtSE(seMax)})` : ""}.
+          Os números abaixo são dessa última semana publicada, não da semana atual. A data de leitura do banco ({fmtData(sem?.ingerido_em)}) não torna o dado recente.
+        </Nota>
+      )}
+      {atual.estado === "em_dia" && sem?.se && seMax && sem.se < seMax && (
         <Nota tipo="aviso">
           A última semana publicada pelo InfoDengue para {DOENCA_ROTULO[doenca]} no RN é a {fmtSE(sem.se)}; para os outros agravos já há a {fmtSE(seMax)}.
-          Os números abaixo são dessa última semana publicada, não da semana atual.
         </Nota>
       )}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {g !== null ? (
           <KpiCard titulo={`Nível de alerta · ${DOENCA_ROTULO[doenca]}`} periodo={periodo} fonte={fonteInfo}
+            ajuda="Nível do InfoDengue: 1 Baixo, 2 Atenção (clima propício), 3 Alerta (transmissão sustentada), 4 Emergência (incidência alta)." 
             valor={m ? <StatusBadge nivel={(m.nv ?? null) as Nivel | null} grande /> : null}
             semDadoMotivo="o InfoDengue não publicou este município nesta semana" />
         ) : (
           <KpiCard titulo={`Municípios por nível · ${DOENCA_ROTULO[doenca]}`} periodo={periodo} fonte={fonteInfo}
+            ajuda="Quantos dos 167 municípios do RN estão em cada nível do InfoDengue: 4 Emergência, 3 Alerta, 2 Atenção, 1 Baixo." 
             valor={est ? <span className="flex flex-wrap gap-x-3 gap-y-1 text-base font-semibold">
               {(["4", "3", "2", "1"] as const).map((k) => (
                 <span key={k} className="inline-flex items-center gap-1"><IconeNivel nivel={Number(k) as Nivel} />{est.porNivel[k]}</span>
@@ -64,26 +83,32 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
             semDadoMotivo="nenhum município publicado nesta semana" />
         )}
         <KpiCard titulo="Casos notificados na semana" periodo={periodo} fonte={fonteInfo}
+          ajuda="Casos notificados ao SINAN e publicados pelo InfoDengue para a última semana epidemiológica disponível. Semanas recentes ainda recebem notificações atrasadas."
           valor={c === null ? null : fmtNum(c)} serie={spark ?? undefined}
           variacao={c !== null && cAnt !== null ? { valor: c - cAnt, contra: fmtSE(sem?.se_anterior), maiorEhPior: true } : null}
           rodapeExtra={g !== null && m?.ce != null ? `estimado pelo InfoDengue: ${fmtNum(m.ce)}. A semana mais recente ainda recebe notificações atrasadas.` : g === null && est ? `${est.nComDado} municípios com registro` : undefined}
           semDadoMotivo="sem registro do InfoDengue nesta semana" />
         <KpiCard titulo="Incidência" periodo={periodo} fonte={fonteInfo} unidade="por 100 mil hab."
+          ajuda="Casos notificados na semana divididos pela população do IBGE, por 100 mil habitantes. Permite comparar municípios de tamanhos diferentes."
           valor={i === null ? null : fmtNum(i, 1)}
           rodapeExtra={rank ? `${rank.pos}º maior entre ${rank.de} municípios do RN` : g === null && est ? `população coberta: ${fmtNum(est.pop)}` : undefined}
           semDadoMotivo="sem casos ou sem população para o cálculo" />
         <KpiCard titulo="Número de reprodução (Rt)" periodo={periodo} fonte={fonteInfo}
+          ajuda="Estimado pelo InfoDengue. Acima de 1, cada caso gera em média mais de um novo caso: a transmissão está crescendo."
           valor={g === null ? null : m?.rt == null ? null : fmtNum(m.rt, 2)}
           semDadoMotivo={g === null ? "Rt é estimado por município; escolha um município" : "o InfoDengue não estimou Rt nesta semana"}
           rodapeExtra={m?.prt != null ? `probabilidade de Rt > 1: ${fmtPct(m.prt, 0)}` : undefined} />
-        <KpiCard titulo="Cobertura de sequenciamento" periodo={cob ? fmtTrimestre(cob.p) : "último trimestre"}
+        <KpiCard titulo="Sequências públicas por casos notificados"
+          ajuda="Sequências do vírus depositadas no GenBank com município identificado, divididas pelos casos notificados no mesmo trimestre. Mede o que é público e identificável, não o sequenciamento feito pelos laboratórios." periodo={cob ? fmtTrimestre(cob.p) : "último trimestre"}
           fonte={{ nome: `${FONTE_GENBANK} + InfoDengue`, atualizado: "calculado pelo VigiGen" }}
           valor={cob && cob.v !== null ? fmtPct(cob.v, 2) : null}
           semDadoMotivo={cob ? cob.mot ?? undefined : gen.estado !== "ok" ? `sequências de ${DOENCA_ROTULO[doenca].toLowerCase()} ainda não ingeridas do GenBank` : "indicador ainda não calculado"}
           rodapeExtra={cob ? `${fmtNum(cob.num)} sequência(s) / ${fmtNum(cob.den)} casos de ${DOENCA_ROTULO[doenca].toLowerCase()}` : undefined} />
-        <KpiCard titulo="Alertas de mudança de linhagem" periodo="Fase 1" fonte={{ nome: "VigiGen (Nextclade)", atualizado: `${fmtNum(r.classificacao.total)} sequências classificadas` }}
-          valor={r.classificacao.total === 0 ? null : fmtNum(alertasAqui.length)}
-          semDadoMotivo="a classificação por Nextclade ainda não rodou; sem ela não há como detectar mudança de linhagem (isto não é zero)"
+        <KpiCard titulo={`Alertas de mudança de linhagem · ${DOENCA_ROTULO[doenca]}`} periodo="Fase 1"
+          ajuda="Alertas das regras R1 (linhagem inédita), R2 (aumento de proporção) e R3 (queda da razão sequências/casos). Só existem depois da classificação Nextclade e da execução da detecção, e todos passam por revisão humana."
+          fonte={{ nome: "VigiGen (Nextclade)", atualizado: `${fmtNum(det.classificadas)} sequências de ${DOENCA_ROTULO[doenca].toLowerCase()} classificadas` }}
+          valor={det.estado === "alertas_pendentes" || det.estado === "alertas_revisados" || det.estado === "concluida_sem_alertas" ? fmtNum(det.alertas.length) : null}
+          semDadoMotivo={MOTIVO_SEM_ALERTA[det.estado]}
           rodapeExtra={<button type="button" className="br-button small" style={{ padding: "0 8px", marginLeft: "-8px" }} onClick={() => irPara("alertas")}>ver por quê</button>} />
       </div>
 

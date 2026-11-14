@@ -95,7 +95,7 @@ Consulta real em 2026-10-16T12:01Z, Nextclade 3.25.0, `nextclade dataset list --
 
 Todos aparecem marcados como `experimental`. Nenhum dataset de chikungunya ou Zika apareceu nesta busca.
 
-## D-014 · Visual no Padrão Digital de Governo (14/11/2026) · pedido por Baden
+## D-017 · Visual no Padrão Digital de Governo (14/11/2026) · pedido por Baden
 **Contexto.** Baden pediu o design system do governo federal (gov.br DS,
 versão 3.7.0, https://www.gov.br/ds/) no painel, no lugar do visual IMD/UFRN.
 **Decisão.** `web/src/tema.css` passa a usar os tokens do gov.br: primária
@@ -120,7 +120,7 @@ Awesome), o seletor de território segue as medidas do `br-input` (o
 `blue-warm-vivid-90`). No escuro, as variáveis equivalem à classe
 `dark-mode` do DS.
 
-## D-015 — Camada genômica multiagravo (14/11/2026)
+## D-018 — Camada genômica multiagravo (14/11/2026)
 
 **Contexto.** O seletor de agravo do painel trocava os dados do InfoDengue,
 mas a camada genômica só tinha dengue: na aba Qualidade do dado,
@@ -159,3 +159,37 @@ real de CHIKV e ZIKV pelo mesmo caminho do GenBank.
 **Estado.** Código e migração 013 na PR #2, testados num Postgres local
 (`tests/fixtures/sql/FIXTURE_teste_013.sql`). Nada aplicado em produção até autorização do
 Baden: aplicar a 013, publicar a Edge Function e disparar a primeira carga.
+
+> Nota de numeração (14/11/2026): a PR #1 (menu de administração) já usa D-014
+> (metas de SLA), D-015 (acesso e trilha de uso) e D-016 (GitHub Pages). Para as
+> duas PRs poderem ser juntadas sem colisão, as decisões desta linha foram
+> renumeradas: gov.br passou de D-014 para D-017 e multiagravo de D-015 para D-018.
+
+## D-019 — Auditoria corretiva, acessibilidade e SLA no painel (14/11/2026)
+
+Pedido por Baden (auditorias de 14/11). O que mudou e por quê:
+
+- **Nenhum número de um agravo aparece em outro.** Alertas e classificações são
+  filtrados por agravo e território; o total global de classificações não é mais
+  usado nas telas. Testes em `web/tests/multiagravo.test.ts` provam isso com
+  dados FIXTURE_.
+- **Estados explícitos da detecção**: sem sequências, aguardando classificação,
+  QC insuficiente, detecção pendente, concluída sem alertas, alertas pendentes e
+  revisados. "Sem alerta" só aparece com execução da detecção registrada
+  (`painel_resumo().deteccao`, lida da auditoria).
+- **Atualidade por agravo**: a última SE publicada de cada agravo é comparada
+  com a SE corrente (em dia até 4 semanas, atrasada até 12, parada acima). A data
+  de leitura do banco não conta como atualidade.
+- **Nome do indicador**: "razão de sequências públicas identificáveis por casos
+  notificados", para não ser lido como cobertura laboratorial. Mapa distingue
+  indicador não calculado, zero observado e sem denominador.
+- **Limiar de genoma quase completo** de CHIKV e ZIKV marcado como exploratório.
+- **Relatórios** levam território, execução da fonte (nº), link verificável da
+  fonte, versão do método e ressalvas.
+- **Migrações 014 (procedência do IBGE), 015 (permissões) e 016 (SLA com meta
+  de 95%)**, testadas em Postgres descartável e **não aplicadas**.
+- **Acessibilidade** (meta WCAG 2.2 AA): pular para o conteúdo, tema claro,
+  escuro ou do sistema, atalhos Alt+Shift (não de tecla única, critério 2.1.4),
+  grupos de opção com setas, gráficos percorríveis pelo teclado com dica
+  flutuante, dicas "i" nos indicadores, regiões roláveis focáveis. Verificado com
+  axe-core 4.10.2 nas 8 abas, nos dois temas, em 1366 px e 390 px: zero violações.

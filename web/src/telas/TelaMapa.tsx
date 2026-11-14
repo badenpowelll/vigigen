@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Ctx } from "./ctx";
 import { Alternador, Nota, Secao } from "../componentes/basicos";
 import { Mapa, TabelaMapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
-import { DOENCA_ROTULO, fmtData, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
+import { DOENCA_ROTULO, fmtData, fmtNum, fmtSE, fmtTrimestre } from "../util";
 import { genomicaDe, motivoSemGenomica } from "../dados/calc";
 
 type Camada = "incidencia" | "casos" | "cobertura";
@@ -20,7 +20,7 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
     const mp = new Map<number, ValorMapa>();
     if (camada === "cobertura") {
       cobMun.forEach((x) => mp.set(x.g, x.v === null ? { v: null, motivo: x.mot ?? "sem denominador" } : { v: x.v * 100, detalhe: `${x.num} seq. / ${fmtNum(x.den)} casos` }));
-      return { valores: mp, unidade: "% dos casos sequenciados", formatar: (v: number) => fmtNum(v, 2), periodo: cobMun[0] ? fmtTrimestre(cobMun[0].p) : "—" };
+      return { valores: mp, unidade: "sequências públicas por 100 casos", formatar: (v: number) => fmtNum(v, 2), periodo: cobMun[0] ? fmtTrimestre(cobMun[0].p) : "—" };
     }
     sem?.municipios.forEach((x) => {
       const v = camada === "incidencia" ? x.i : x.c;
@@ -39,8 +39,7 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
     return { n, v: v?.v ?? null, motivo: v ? v.motivo : "sem registro" };
   }).sort((a, b) => (b.v ?? -1) - (a.v ?? -1)), [nomes, valores]);
 
-  const todosZero = camada === "cobertura" && [...valores.values()].every((v) => v.v === null || v.v === 0);
-
+  
   // Quatro estados da cobertura, contados sobre os municípios da malha (nada é inferido).
   const estados = useMemo(() => {
     if (camada !== "cobertura") return null;
@@ -63,11 +62,11 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
   return (
     <Secao titulo="Mapa de calor do Rio Grande do Norte"
       subtitulo={camada === "cobertura"
-        ? `Cobertura genômica observável no GenBank (${agr}) · ${periodo} · consulta ao GenBank em ${fmtData(consultaGb)}`
+        ? `Razão de sequências públicas identificáveis por casos notificados (${agr}) · ${periodo} · consulta ao GenBank em ${fmtData(consultaGb)}`
         : `${DOENCA_ROTULO[doenca]} · ${periodo}`}
       acoes={<>
         <Alternador rotulo="Camada do mapa" valor={camada} aoMudar={setCamada}
-          opcoes={[{ v: "incidencia", r: "Incidência" }, { v: "casos", r: "Casos" }, { v: "cobertura", r: "Cobertura genômica" }]} />
+          opcoes={[{ v: "incidencia", r: "Incidência" }, { v: "casos", r: "Casos" }, { v: "cobertura", r: "Sequências / casos" }]} />
         <button type="button" className="br-button secondary small" aria-pressed={verTabela} onClick={() => setVerTabela((x) => !x)}>
           {verTabela ? "Ver mapa" : "Ver como tabela"}
         </button>
@@ -75,12 +74,23 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
       {camada === "cobertura" && gen.estado !== "ok" && (
         <div className="mb-3"><Nota tipo="aviso">{motivoSemGenomica(doenca, gen.estado)}</Nota></div>
       )}
-      {todosZero && (
-        <div className="mb-3"><Nota tipo="aviso">
-          Nenhum município do RN tem sequência depositada com coleta neste trimestre. A cobertura é 0% onde houve casos e fica
-          "sem dado" onde não houve casos ou onde há sequência do RN sem município identificável. Isto reflete o que está
-          depositado no GenBank, não a capacidade de sequenciamento do estado.
-        </Nota></div>
+      {camada === "cobertura" && gen.estado === "ok" && estados && (
+        cobMun.length === 0 ? (
+          <div className="mb-3"><Nota tipo="aviso">
+            <strong>Indicador não calculado.</strong> Não há registro do indicador por município para {agr} neste banco. Isto é dado não
+            carregado ou não calculado, não ausência de sequência nem zero.
+          </Nota></div>
+        ) : estados.calculavel === 0 && estados.zero > 0 ? (
+          <div className="mb-3"><Nota tipo="aviso">
+            <strong>Zero observado.</strong> Em {fmtNum(estados.zero)} município(s) houve casos de {agr} no trimestre e nenhuma sequência pública
+            com município identificável. Isto é ausência de registro no GenBank, não prova de que não houve sequenciamento.
+          </Nota></div>
+        ) : estados.calculavel === 0 ? (
+          <div className="mb-3"><Nota tipo="aviso">
+            <strong>Sem razão calculável.</strong> Nenhum município tem ao mesmo tempo casos e sequência com município no trimestre; os demais
+            ficam sem dado, com o motivo. Nada aqui é zero.
+          </Nota></div>
+        ) : null
       )}
       {dados.malha ? (verTabela
         ? <TabelaMapa linhas={linhas} unidade={unidade} />
@@ -118,7 +128,7 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
       <p className="mt-3 text-xs text-suave">
         Malha: IBGE, limites municipais {dados.malha?.ano_referencia ?? ""} (geometria simplificada para exibição).
         Classes por quantis dos valores positivos; a hachura marca município sem dado, que não é o mesmo que zero.
-        {camada === "cobertura" && ` Cobertura observável = sequências de ${agr} no GenBank com coleta no trimestre e município identificado ÷ casos notificados de ${agr} (InfoDengue) no mesmo trimestre e município. Valor em %: ${fmtPct(0.0001, 2)} equivale a 1 sequência a cada 10 mil casos. Mede o que está depositado e identificável na base pública, não o sequenciamento realizado pelos laboratórios, e não é representativa da circulação viral.`}
+        {camada === "cobertura" && ` Razão = sequências de ${agr} no GenBank com coleta no trimestre e município identificado ÷ casos notificados de ${agr} (InfoDengue) no mesmo trimestre e município, mostrada por 100 casos: 0,01 equivale a 1 sequência a cada 10 mil casos. Mede o que está depositado e identificável na base pública, não o sequenciamento realizado pelos laboratórios, e não é representativa da circulação viral.`}
       </p>
     </Secao>
   );

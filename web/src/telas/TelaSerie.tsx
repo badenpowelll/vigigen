@@ -68,7 +68,7 @@ export function TelaSerie({ dados, g, nomeSel, doenca }: Ctx) {
         {gen.estado !== "ok" ? <Nota tipo="aviso">{motivoSemGenomica(doenca, gen.estado)}</Nota> : (
           <>
             <div className="mb-3"><Nota>Os números representam as sequências disponíveis no GenBank, não a circulação do vírus na população.</Nota></div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabela de sequências por ano">
               <table className="w-full text-sm">
                 <thead><tr className="text-left"><th className="py-1 pr-3">Ano de coleta</th><th className="py-1 pr-3 text-right">Sequências do Brasil</th><th className="py-1 text-right">Do RN</th></tr></thead>
                 <tbody>

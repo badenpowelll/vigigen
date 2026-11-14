@@ -1,0 +1,21 @@
+{
+  "_nota": "FIXTURE: resumo fictício só para testes do painel. Números escolhidos para serem reconhecíveis; não vêm de nenhuma fonte.",
+  "gerado_em": "2026-11-14T12:00:00Z",
+  "fontes": {
+    "infodengue": { "id": 9001, "status": "ok", "finalizado_em": "2026-11-13T08:00:00Z", "iniciado_em": "2026-11-13T07:00:00Z", "registros": 111 },
+    "genbank": { "id": 9002, "status": "ok", "finalizado_em": "2026-11-14T10:05:00Z", "iniciado_em": "2026-11-14T10:00:00Z", "registros": 7777 }
+  },
+  "em_andamento": [],
+  "genbank": { "total": 7777, "rn": 33, "rn_por_nome_cepa": 0, "brasil_sem_estado": 10, "sem_geo": 0, "genoma_quase_completo": 700, "por_sorotipo": { "DENV-2": 7777 }, "termo": "FIXTURE dengue" },
+  "sequencias_rn": [],
+  "composicao_brasil": [],
+  "por_ano_brasil": [{ "a": 2024, "n": 7777, "rn": 33 }],
+  "indicadores": [],
+  "cobertura_municipal_trimestre": [{ "g": 2408102, "p": "2026T3", "v": 0.0777, "num": 7, "den": 90, "mot": null }],
+  "alertas": [
+    { "id": "FIXTURE_A1", "g": 2408102, "tipo": "R1", "p": "2026T3", "status": "novo", "ev": {}, "criado": "2026-11-14T11:00:00Z", "rev": null }
+  ],
+  "classificacao": { "total": 5555 },
+  "exclusoes_qc": {},
+  "deteccao": null
+}

@@ -26,6 +26,7 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
       </p>
       {gen.estado !== "ok" && <Nota tipo="aviso">{motivoSemGenomica(doenca, gen.estado)}</Nota>}
       {gen.estado === "ok" && <>
+      <h2 className="sr-only">Indicadores de qualidade das sequências de {agr}</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard titulo={`Sequências de ${agr} do Brasil`} periodo="todo o histórico" fonte={fonteGb} valor={fmtNum(gb.total)}
           rodapeExtra={`termo: ${gb.termo}`} />
@@ -34,13 +35,13 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
           rodapeExtra={`${fmtNum(gb.brasil_sem_estado)} com geo_loc só "Brazil"; ${fmtNum(gb.sem_geo)} sem geo_loc`} />
         <KpiCard titulo="Sequências do RN" periodo="todo o histórico" fonte={fonteGb} valor={fmtNum(gb.rn)}
           rodapeExtra={`+ ${gb.rn_por_nome_cepa} com "/RN/" no nome da cepa (contadas à parte)`} />
-        <KpiCard titulo="Genoma quase completo" periodo="todo o histórico" fonte={fonteGb}
-          valor={gb.total ? fmtPct(gb.genoma_quase_completo / gb.total) : null} rodapeExtra={`≥ ${fmtNum(gen.limiar)} nt${gen.criterioLimiar ? ` (${gen.criterioLimiar})` : ""}; o restante são genes parciais`} />
+        <KpiCard titulo={gen.provisorio ? "Genoma quase completo (exploratório)" : "Genoma quase completo"} periodo="todo o histórico" fonte={fonteGb}
+          valor={gb.total ? fmtPct(gb.genoma_quase_completo / gb.total) : null} rodapeExtra={`≥ ${fmtNum(gen.limiar)} nt${gen.criterioLimiar ? ` (${gen.criterioLimiar})` : ""}; o restante são genes parciais.${gen.provisorio ? " Indicador exploratório de comprimento: o limiar ainda não foi validado como critério de QC para este vírus." : ""}`} />
       </div>
 
       <Secao titulo="Oportunidade: dias entre a coleta e a publicação no GenBank" subtitulo="Mediana (P25–P75) por ano de coleta, sequências do Brasil com data de coleta exata">
         {oport.length ? (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabela de oportunidade por ano">
             <table className="w-full text-sm">
               <thead><tr className="text-left"><th className="py-1 pr-3">Ano</th>{soros.map((s) => <th key={s} className="py-1 pr-3"><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm" style={{ background: COR_SOROTIPO[s] ?? "var(--texto-suave)" }} />{s}</th>)}</tr></thead>
               <tbody>
@@ -61,10 +62,10 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
         <p className="mt-2 text-xs text-suave">Disponibilidade = data de criação do registro (create-date), que é quando a sequência ficou pública. Coletas com só o ano ou o mês ficam de fora para não inventar dia.</p>
       </Secao>
 
-      <Secao titulo="Cobertura de sequenciamento no RN, por ano" subtitulo={`Sequências de ${agr} do RN com coleta no ano ÷ casos notificados de ${agr} no RN`}>
-        <div className="overflow-x-auto">
+      <Secao titulo="Sequências públicas por casos notificados no RN, por ano" subtitulo={`Sequências de ${agr} do RN depositadas no GenBank com coleta no ano ÷ casos notificados de ${agr} no RN. Mede o que é público e identificável, não o sequenciamento feito pelos laboratórios.`}>
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabela de sequências por casos, por ano">
           <table className="w-full text-sm">
-            <thead><tr className="text-left"><th className="py-1 pr-3">Ano</th><th className="py-1 pr-3 text-right">Sequências</th><th className="py-1 pr-3 text-right">Casos</th><th className="py-1 text-right">Cobertura</th></tr></thead>
+            <thead><tr className="text-left"><th className="py-1 pr-3">Ano</th><th className="py-1 pr-3 text-right">Sequências</th><th className="py-1 pr-3 text-right">Casos</th><th className="py-1 text-right">Razão</th></tr></thead>
             <tbody>
               {cobUF.map((x) => (
                 <tr key={x.p} className="border-t border-borda">
@@ -81,7 +82,7 @@ export function TelaQualidade({ dados, doenca }: Ctx) {
 
       <Secao titulo="Sequências do Rio Grande do Norte no GenBank" subtitulo="Todas as encontradas, com o texto de origem como foi depositado">
         {r.sequencias_rn.length === 0 ? <Nota>Nenhuma sequência de {agr} do Brasil no GenBank cita o RN na origem.</Nota> : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabela das sequências do RN">
           <table className="w-full text-sm">
             <thead><tr className="text-left"><th className="py-1 pr-3">Accession</th>{doenca === "dengue" && <th className="py-1 pr-3">Sorotipo</th>}<th className="py-1 pr-3">Coleta</th><th className="py-1 pr-3">Origem declarada</th><th className="py-1 pr-3 text-right">nt</th><th className="py-1">Critério</th></tr></thead>
             <tbody>

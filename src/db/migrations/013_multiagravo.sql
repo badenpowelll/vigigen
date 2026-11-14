@@ -282,7 +282,7 @@ returns jsonb language sql stable security invoker set search_path = '' as $$
     'config', (select jsonb_build_object('termo', termo_ncbi, 'referencia', referencia,
                  'tamanho_referencia', tamanho_referencia, 'limiar', limiar_quase_completo,
                  'criterio_limiar', criterio_limiar, 'classificacao', classificacao) from cfg),
-    'fonte', (select jsonb_build_object('status', status, 'iniciado_em', iniciado_em,
+    'fonte', (select jsonb_build_object('id', id, 'status', status, 'iniciado_em', iniciado_em,
                  'finalizado_em', finalizado_em, 'registros', registros)
               from public.execucao_ingestao, cfg
               where fonte = 'genbank' and status in ('ok','vazio') and parametros->>'termo' = cfg.termo_ncbi
@@ -339,7 +339,7 @@ returns jsonb language sql stable security invoker set search_path = '' as $$
     'gerado_em', now(),
     'fontes', (select jsonb_object_agg(fonte, x) from (
         select distinct on (fonte) fonte, jsonb_build_object(
-          'status', status, 'finalizado_em', finalizado_em, 'iniciado_em', iniciado_em,
+          'id', id, 'status', status, 'finalizado_em', finalizado_em, 'iniciado_em', iniciado_em,
           'registros', registros, 'rota', parametros->>'rota') x
         from public.execucao_ingestao where status in ('ok','vazio')
         order by fonte, finalizado_em desc) f),
@@ -359,6 +359,10 @@ returns jsonb language sql stable security invoker set search_path = '' as $$
         'ev', evidencia, 'criado', criado_em, 'rev', revisado_em) order by criado_em desc), '[]')
       from public.alerta),
     'classificacao', (select jsonb_build_object('total', count(*)) from public.classificacao),
+    -- última execução da detecção R1/R2/R3 (só existe se rodou; a RLS da auditoria
+    -- decide quem vê). Sem ela o painel nunca mostra "sem alertas" como resultado.
+    'deteccao', (select jsonb_build_object('em', ocorrido_em, 'resumo', detalhe)
+                 from public.auditoria where acao = 'deteccao' order by ocorrido_em desc limit 1),
     'exclusoes_qc', (select coalesce(jsonb_object_agg(motivo, n), '{}') from
                       (select motivo, count(*) n from public.exclusao_qc group by 1) q)
   );

@@ -1,4 +1,4 @@
-"""Camada genômica multiagravo (D-015): o vírus vem só do organismo declarado
+"""Camada genômica multiagravo (D-018): o vírus vem só do organismo declarado
 e o sorotipo DENV só existe para dengue."""
 import os
 import shutil
@@ -39,8 +39,12 @@ def test_termos_iguais_na_edge_function_e_na_migracao():
                     reason="defina VIGIGEN_PG_TESTE=<url de um Postgres descartável> para testar a migração")
 def test_migracao_013_em_postgres_descartavel():
     url = os.environ["VIGIGEN_PG_TESTE"]
-    for arq in ("tests/fixtures/sql/FIXTURE_esquema_minimo.sql", "tests/fixtures/sql/FIXTURE_teste_013.sql"):
+    saida = ""
+    for arq in ("tests/fixtures/sql/FIXTURE_esquema_minimo.sql", "tests/fixtures/sql/FIXTURE_teste_013.sql",
+                "tests/fixtures/sql/FIXTURE_teste_014_015.sql"):
         r = subprocess.run(["psql", url, "-q", "-v", "ON_ERROR_STOP=1", "-f", arq],
                            cwd=RAIZ, capture_output=True, text=True)
         assert r.returncode == 0, r.stderr
-    assert "OK: migração 013" in r.stderr
+        saida += r.stderr
+    for m in ("013", "014", "015", "016"):
+        assert f"OK: migração {m}" in saida

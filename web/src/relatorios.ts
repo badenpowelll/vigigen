@@ -77,12 +77,12 @@ export function montarRelatorios({ dados, doenca, g, nomeSel, serieMun }: Ctx): 
 
   const cobertura: Relatorio = {
     id: "cobertura", porAgravo: true,
-    titulo: `Cobertura genômica observável no GenBank por município (${agrMin})`,
+    titulo: `Sequências públicas identificáveis por casos notificados, por município (${agrMin})`,
     descricao: "Sequências depositadas no GenBank com município de coleta, divididas pelos casos notificados no trimestre.",
     fonte: `${FONTE_GENBANK} e ${FONTE_INFODENGUE}`,
     colunas: [
       { r: "Código IBGE" }, { r: "Município" }, { r: "Trimestre" }, { r: "Sequências com o município", tipo: "num" },
-      { r: "Casos notificados", tipo: "num" }, { r: "Cobertura", tipo: "pct" }, { r: "Motivo de não calcular" },
+      { r: "Casos notificados", tipo: "num" }, { r: "Razão sequências/casos", tipo: "pct" }, { r: "Motivo de não calcular" },
     ],
     linhas: [...r.cobertura_municipal_trimestre].sort((a, b) => nome(a.g).localeCompare(nome(b.g), "pt-BR"))
       .map((x) => [x.g, nome(x.g), x.p, x.num, x.den, x.v, x.mot]),
@@ -169,21 +169,48 @@ export function montarRelatorios({ dados, doenca, g, nomeSel, serieMun }: Ctx): 
 }
 
 /** Linhas de cabeçalho que vão em todo arquivo exportado. */
+/** Versão das regras de cálculo que o painel exibe (indicadores, limiares, detecção). */
+export const VERSAO_METODO = "VigiGen painel 0.1.0 · indicadores e camada multiagravo da migração 013 (D-018) · detecção R1/R2/R3 v1 (só dengue)";
+
+const LINK_INFODENGUE = "https://info.dengue.mat.br/services/api";
+const linkGenbank = (termo: string | null) =>
+  termo ? `https://www.ncbi.nlm.nih.gov/nuccore/?term=${encodeURIComponent(termo)}` : "https://www.ncbi.nlm.nih.gov/nuccore/";
+
 export function metadados(rel: Relatorio, ctx: Ctx, geradoEm: Date): [string, string][] {
-  const { dados, doenca } = ctx;
+  const { dados, doenca, nomeSel } = ctx;
   const origem =
     dados.origem === "conector" ? "Banco do VigiGen, lido ao vivo pelo conector Supabase"
       : dados.origem === "supabase" ? "Banco do VigiGen, lido ao vivo"
         : `Retrato do banco do VigiGen tirado em ${fmtDataHora(dados.lidoEm)}`;
+  const r = dados.resumo;
+  const gen = genomicaDe(r, doenca);
+  const usaInfo = rel.fonte.includes(FONTE_INFODENGUE);
+  const usaGb = rel.fonte.includes(FONTE_GENBANK);
+  const sem = dados.semana[doenca as Doenca];
+  const execucoes: [string, string][] = [];
+  if (usaInfo) {
+    const f = r?.fontes?.infodengue;
+    execucoes.push(["Execução InfoDengue", f ? `${f.id != null ? `nº ${f.id}, ` : ""}concluída em ${fmtDataHora(f.finalizado_em)}, ${f.registros} registros` : "sem execução concluída registrada"]);
+    if (rel.porAgravo) execucoes.push(["Última SE publicada", `${fmtSE(sem?.se)} (${DOENCA_ROTULO[doenca]})`]);
+    execucoes.push(["Link da fonte", LINK_INFODENGUE]);
+  }
+  if (usaGb) {
+    execucoes.push(["Execução GenBank", gen.consultaEm ? `${gen.execucao != null ? `nº ${gen.execucao}, ` : ""}consulta concluída em ${fmtDataHora(gen.consultaEm)}` : "sem consulta concluída registrada para este agravo"]);
+    execucoes.push(["Link da fonte", linkGenbank(gen.termo)]);
+  }
   return [
     ["Relatório", rel.titulo],
     ...(rel.porAgravo ? [["Agravo", DOENCA_ROTULO[doenca]] as [string, string]] : []),
+    ["Território selecionado", nomeSel],
     ["Fonte", rel.fonte],
+    ...execucoes,
     ["Origem do dado", origem],
     ["Dado lido em", fmtDataHora(dados.lidoEm)],
     ["Arquivo gerado em", fmtDataHora(geradoEm.toISOString())],
+    ["Versão do método", VERSAO_METODO],
     ["Linhas", String(rel.linhas.length)],
     ["Natureza", "Dados reais das fontes públicas citadas; nenhum valor simulado ou completado."],
+    ["Ressalva", "Dados não instantâneos: o InfoDengue revisa semanas recentes retroativamente e as sequências públicas chegam em lote, com defasagem de semanas a meses."],
     ...rel.notas.map((n) => ["Nota", n] as [string, string]),
   ];
 }

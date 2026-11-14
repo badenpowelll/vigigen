@@ -92,7 +92,7 @@ export function TelaRelatorios(ctx: Ctx) {
 
           {!vazio && (
             <>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Prévia do relatório">
                 <table className="tabela-relatorio w-full text-sm">
                   <thead>
                     <tr>{rel.colunas.map((c) => <th key={c.r} className={c.tipo ? "text-right" : "text-left"}>{c.r}</th>)}</tr>

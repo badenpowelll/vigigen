@@ -33,7 +33,7 @@ def exportar_fasta(destino: Path) -> int:
         for acc, seq in con.execute(
                 "select accession, sequencia_fasta from public.sequencia where sequencia_fasta is not null"
                 " and organismo ~* '^\\s*dengue virus' order by accession"):
-            # só dengue: os datasets Nextclade do workflow são de DENV (D-013, D-015)
+            # só dengue: os datasets Nextclade do workflow são de DENV (D-013, D-018)
             corpo = seq if seq.startswith(">") else f">{acc}\n{seq}\n"
             f.write(corpo if corpo.endswith("\n") else corpo + "\n")
             n += 1

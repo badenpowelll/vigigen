@@ -1,5 +1,5 @@
 // VigiGen — ingestão NCBI GenBank via E-utilities (esearch + efetch GBSet XML).
-// Um termo por agravo (D-015). Sem "agravo" no corpo, vale dengue, como antes.
+// Um termo por agravo (D-018). Sem "agravo" no corpo, vale dengue, como antes.
 // Consultas validadas no esearch em 14/11/2026: DENV 7.203, CHIKV 1.839, ZIKV 519.
 // Limite: 3 req/s sem chave, 10 req/s com NCBI_API_KEY (segredo da função).
 // O XML cru vai para public.bruto; a extração (geo_loc_name/country, data de

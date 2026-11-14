@@ -39,7 +39,7 @@ avaliação precisa ser reproduzível por terceiros.
 - Node 20+ e React + TypeScript + Vite + Tailwind para o painel (`web/`).
   Visual segue o Padrão Digital de Governo (gov.br Design System 3.7.0, pacote @govbr-ds/core): tokens
   de cor, tipografia Rawline (Raleway como substituta) e superfícies; a marca
-  do VigiGen continua a própria, sem a marca gov.br (D-014).
+  do VigiGen continua a própria, sem a marca gov.br (D-017).
 - Nextclade CLI para classificação de sorotipo e linhagem (`src/pipeline/`),
   executado no GitHub Actions ou localmente.
 - Nextflow para orquestrar o pipeline quando ele estiver estável (fase

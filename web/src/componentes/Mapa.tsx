@@ -41,6 +41,9 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
 
   return (
     <figure className="min-w-0">
+      <button type="button" className="pular-mapa" onClick={(e) => (e.currentTarget.parentElement?.querySelector("figcaption") as HTMLElement | null)?.focus()}>
+        Pular o mapa ({caminhos.length} municípios); a mesma informação está em "Ver como tabela"
+      </button>
       <div className="relative overflow-hidden rounded-[var(--raio)] border border-borda bg-[var(--superficie-2)]">
         <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="group" aria-label={titulo}>
           <defs>
@@ -84,7 +87,7 @@ export function Mapa({ malha, valores, limites, formatar, unidade, titulo, selec
           </div>
         )}
       </div>
-      <figcaption className="mt-2">
+      <figcaption className="mt-2 outline-none" tabIndex={-1}>
         <Legenda limites={limites} formatar={formatar} unidade={unidade} />
       </figcaption>
     </figure>
@@ -133,7 +136,7 @@ export function limitesQuantis(vals: number[], k = 5): number[] {
 
 export function TabelaMapa({ linhas, unidade }: { linhas: { n: string; v: number | null; motivo?: string }[]; unidade: string }) {
   return (
-    <div className="max-h-80 overflow-auto rounded-[var(--raio)] border border-borda">
+    <div className="max-h-80 overflow-auto rounded-[var(--raio)] border border-borda" tabIndex={0} role="region" aria-label={`Tabela do mapa: ${unidade}`}>
       <table className="w-full text-sm">
         <caption className="sr-only">Tabela alternativa ao mapa</caption>
         <thead className="sticky top-0 bg-[var(--superficie-2)] text-left">

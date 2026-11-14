@@ -40,6 +40,21 @@ export function GraficoLinhas({ series, dominio, unidade, titulo, altura = 240 }
 
   const base = series[0]?.pontos ?? [];
   const pontoFoco = foco !== null ? base[foco] : null;
+  // índice do primeiro ponto visível no domínio, para o teclado
+  const primeiro = Math.max(0, base.findIndex((p) => p.t >= dominio[0]));
+
+  function teclado(ev: React.KeyboardEvent<SVGSVGElement>) {
+    if (!base.length) return;
+    const passo = ev.shiftKey ? 4 : 1;
+    let i = foco ?? base.length - 1;
+    if (ev.key === "ArrowLeft") i = Math.max(primeiro, i - passo);
+    else if (ev.key === "ArrowRight") i = Math.min(base.length - 1, i + passo);
+    else if (ev.key === "Home") i = primeiro;
+    else if (ev.key === "End") i = base.length - 1;
+    else if (ev.key === "Escape") { setFoco(null); return; }
+    else return;
+    ev.preventDefault(); setFoco(i);
+  }
 
   function mover(ev: React.PointerEvent<SVGRectElement>) {
     const r = (ev.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect();
@@ -53,7 +68,9 @@ export function GraficoLinhas({ series, dominio, unidade, titulo, altura = 240 }
   return (
     <figure className="min-w-0">
       <div className="overflow-x-auto" ref={caixa}>
-        <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full min-w-[320px]" role="img" aria-label={titulo}>
+        <div className="relative">
+        <svg viewBox={`0 0 ${W} ${H}`} className="grafico-foco block h-auto w-full min-w-[320px]" role="img" tabIndex={0}
+          aria-label={`${titulo}. Use as setas para percorrer as semanas.`} onKeyDown={teclado} onBlur={() => setFoco(null)}>
           {ticks.map((t) => (
             <g key={t}>
               <line x1={m.l} x2={W - m.r} y1={y(t)} y2={y(t)} stroke="var(--borda)" />
@@ -71,9 +88,25 @@ export function GraficoLinhas({ series, dominio, unidade, titulo, altura = 240 }
               strokeDasharray={s.tracejado ? "4 3" : undefined} strokeLinejoin="round" />
           ))}
           {pontoFoco && <line x1={x(pontoFoco.t)} x2={x(pontoFoco.t)} y1={m.t} y2={H - m.b} stroke="var(--texto-suave)" />}
+          {pontoFoco && series.map((s) => {
+            const v = s.pontos[foco!]?.v;
+            return v == null ? null : <circle key={s.nome} cx={x(pontoFoco.t)} cy={y(v)} r={4} fill={s.cor} stroke="var(--superficie)" strokeWidth={1.5} />;
+          })}
           <rect x={m.l} y={m.t} width={W - m.l - m.r} height={H - m.t - m.b} fill="transparent"
-            onPointerMove={mover} onPointerLeave={() => setFoco(null)} />
+            onPointerMove={mover} onPointerDown={mover} onPointerLeave={() => setFoco(null)} />
         </svg>
+        {pontoFoco && (
+          <div className="grafico-dica" aria-hidden="true"
+            style={{ left: `${(x(pontoFoco.t) / W) * 100}%`, top: 4, transform: x(pontoFoco.t) > W * 0.6 ? "translateX(calc(-100% - 10px))" : "translateX(10px)" }}>
+            <div className="font-semibold">Semana de {pontoFoco.t.toLocaleDateString("pt-BR")}</div>
+            {series.map((s) => (
+              <div key={s.nome} className="num flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: s.cor }} />{s.nome}: <strong>{s.pontos[foco!]?.v == null ? "sem dado" : fmtNum(s.pontos[foco!]!.v)}</strong>
+              </div>
+            ))}
+          </div>
+        )}
+        </div>
       </div>
       <figcaption className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-suave">
         {series.map((s) => (
@@ -185,7 +218,12 @@ export function Radar({ eixos, titulo }: { eixos: { nome: string; p: number | nu
         );
       })}
       <polygon points={poli(eixos.map((e) => e.p))} fill="var(--destaque)" fillOpacity={0.18} stroke="var(--destaque)" strokeWidth={2} />
-      {eixos.map((e, i) => e.p === null ? null : <circle key={e.nome} cx={pt(i, (e.p / 100) * R)[0]} cy={pt(i, (e.p / 100) * R)[1]} r={3} fill="var(--destaque)" />)}
+      {eixos.map((e, i) => e.p === null ? null : (
+        <circle key={e.nome} cx={pt(i, (e.p / 100) * R)[0]} cy={pt(i, (e.p / 100) * R)[1]} r={5} fill="var(--destaque)" tabIndex={0}
+          aria-label={`${e.nome}: percentil ${fmtNum(e.p)} entre os municípios do RN`}>
+          <title>{`${e.nome}: percentil ${fmtNum(e.p)} (50 = mediana do estado)`}</title>
+        </circle>
+      ))}
     </svg>
   );
 }
