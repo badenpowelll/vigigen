@@ -5,10 +5,19 @@ import { fmtNum } from "../util";
 
 export interface SerieLinha { nome: string; cor: string; pontos: { t: Date; v: number | null }[]; tracejado?: boolean }
 
-const ANOS = (ini: Date, fim: Date) => {
-  const a: Date[] = [];
-  for (let y = ini.getUTCFullYear(); y <= fim.getUTCFullYear(); y++) a.push(new Date(Date.UTC(y, 0, 1)));
-  return a.filter((d) => d >= ini && d <= fim);
+const MES_CURTO = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+/** Marcas do eixo do tempo: anos em períodos longos, meses quando o recorte tem menos de ~14 meses. */
+const MARCOS = (ini: Date, fim: Date): { d: Date; r: string }[] => {
+  const a: { d: Date; r: string }[] = [];
+  if (fim.getTime() - ini.getTime() > 420 * 86400000) {
+    for (let y = ini.getUTCFullYear(); y <= fim.getUTCFullYear(); y++) a.push({ d: new Date(Date.UTC(y, 0, 1)), r: String(y) });
+  } else {
+    for (let y = ini.getUTCFullYear(), m = ini.getUTCMonth(); Date.UTC(y, m, 1) <= fim.getTime(); m === 11 ? (y++, m = 0) : m++)
+      a.push({ d: new Date(Date.UTC(y, m, 1)), r: MES_CURTO[m] });
+    return a.filter((x) => x.d >= ini && x.d <= fim)
+      .map((x, i) => (i === 0 || x.d.getUTCMonth() === 0 ? { ...x, r: `${x.r} ${x.d.getUTCFullYear()}` } : x));
+  }
+  return a.filter((x) => x.d >= ini && x.d <= fim);
 };
 
 /** Largura real do contêiner, para o texto do SVG sair no tamanho certo. */
@@ -77,10 +86,10 @@ export function GraficoLinhas({ series, dominio, unidade, titulo, altura = 240 }
               <text x={m.l - 6} y={y(t)} dy="0.32em" textAnchor="end" fontSize="11" fill="var(--texto-suave)" className="num">{fmtNum(t)}</text>
             </g>
           ))}
-          {ANOS(dominio[0], dominio[1]).map((a) => (
+          {MARCOS(dominio[0], dominio[1]).map(({ d: a, r }) => (
             <g key={a.getTime()}>
               <line x1={x(a)} x2={x(a)} y1={m.t} y2={H - m.b} stroke="var(--borda)" strokeDasharray="2 3" />
-              <text x={x(a) + 3} y={H - 8} fontSize="11" fill="var(--texto-suave)" className="num">{a.getUTCFullYear()}</text>
+              <text x={x(a) + 3} y={H - 8} fontSize="11" fill="var(--texto-suave)" className="num">{r}</text>
             </g>
           ))}
           {series.map((s, i) => (

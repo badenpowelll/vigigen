@@ -6,6 +6,7 @@ import { Alternador, Nota, Secao } from "../componentes/basicos";
 import { BarrasComposicao, GraficoLinhas } from "../componentes/Graficos";
 import { COR_DOENCA, COR_SOROTIPO, DOENCA_ROTULO, SOROTIPOS, fmtNum, fmtPct } from "../util";
 import { SIGLA_VIRUS, genomicaDe, motivoSemGenomica } from "../dados/calc";
+import { DetalheSorotipos } from "../componentes/Sorotipos";
 
 export function TelaSerie({ dados, g, nomeSel, doenca }: Ctx) {
   const [medida, setMedida] = useState<"c" | "i">("c");
@@ -119,6 +120,7 @@ export function TelaSerie({ dados, g, nomeSel, doenca }: Ctx) {
             </div>
           </dl>
         )}
+        {comp.length > 0 && <DetalheSorotipos comp={comp} totais={gb?.por_sorotipo} seqRN={gen.r?.sequencias_rn ?? []} />}
         <p className="mt-2 text-xs text-suave">
           Sorotipo como informado pelo depositante no GenBank (campo serotype ou título), antes da classificação pelo Nextclade.
           "Não declarado" não é um sorotipo: é a parte que só a classificação vai resolver. Fonte: NCBI GenBank, termo {gb?.termo}.

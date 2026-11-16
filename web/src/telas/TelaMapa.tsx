@@ -2,13 +2,17 @@ import { useMemo, useState } from "react";
 import type { Ctx } from "./ctx";
 import { Alternador, Nota, Secao } from "../componentes/basicos";
 import { Mapa, TabelaMapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
+import { DOENCAS, type Doenca } from "../dados/tipos";
+import { Vetor } from "../componentes/Vetor";
+import { AnaliseAutomatica } from "../componentes/AnaliseAutomatica";
 import { DOENCA_ROTULO, fmtData, fmtNum, fmtSE, fmtTrimestre } from "../util";
 import { genomicaDe, motivoSemGenomica } from "../dados/calc";
 
 type Camada = "incidencia" | "casos" | "cobertura";
 
-export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
+export function TelaMapa({ dados, doenca, g, setG, setDoenca, irPara }: Ctx) {
   const [camada, setCamada] = useState<Camada>("incidencia");
+  const [tres, setTres] = useState(false);
   const [verTabela, setVerTabela] = useState(false);
   const sem = dados.semana[doenca];
   const gen = useMemo(() => genomicaDe(dados.resumo, doenca), [dados.resumo, doenca]);
@@ -60,13 +64,21 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
   const consultaGb = gen.consultaEm;
 
   return (
+    <div className="flex flex-col gap-4">
     <Secao titulo="Mapa de calor do Rio Grande do Norte"
       subtitulo={camada === "cobertura"
         ? `Razão de sequências públicas identificáveis por casos notificados (${agr}) · ${periodo} · consulta ao GenBank em ${fmtData(consultaGb)}`
         : `${DOENCA_ROTULO[doenca]} · ${periodo}`}
       acoes={<>
+        {setDoenca && <Alternador rotulo="Vírus no mapa" valor={doenca} aoMudar={(d) => { setTres(false); setDoenca(d as Doenca); }}
+          opcoes={DOENCAS.map((d) => ({ v: d, r: DOENCA_ROTULO[d] }))} />}
         <Alternador rotulo="Camada do mapa" valor={camada} aoMudar={setCamada}
           opcoes={[{ v: "incidencia", r: "Incidência" }, { v: "casos", r: "Casos" }, { v: "cobertura", r: "Sequências / casos" }]} />
+        {camada !== "cobertura" && (
+          <button type="button" className="br-button secondary small" aria-pressed={tres} onClick={() => setTres((x) => !x)}>
+            {tres ? "Ver um vírus" : "Comparar os três vírus"}
+          </button>
+        )}
         <button type="button" className="br-button secondary small" aria-pressed={verTabela} onClick={() => setVerTabela((x) => !x)}>
           {verTabela ? "Ver mapa" : "Ver como tabela"}
         </button>
@@ -94,8 +106,11 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
       )}
       {dados.malha ? (verTabela
         ? <TabelaMapa linhas={linhas} unidade={unidade} />
-        : <Mapa malha={dados.malha} valores={valores} limites={limites} formatar={formatar} unidade={unidade}
-            titulo={`Mapa: ${unidade}, ${periodo}`} selecionado={g} aoSelecionar={setG} />)
+        : tres && camada !== "cobertura"
+          ? <TresVirus dados={dados} camada={camada} g={g} setG={setG} />
+          : <Mapa malha={dados.malha} valores={valores} limites={limites} formatar={formatar} unidade={unidade}
+              paleta={camada === "cobertura" ? undefined : doenca}
+              titulo={`Mapa de ${DOENCA_ROTULO[doenca].toLowerCase()}: ${unidade}, ${periodo}`} selecionado={g} aoSelecionar={setG} aoSelecionarEstado={() => setG(null)} />)
         : <Nota>Sem malha municipal carregada.</Nota>}
       {estados && (
         <dl className="mt-4 grid grid-cols-2 gap-3 text-sm lg:grid-cols-5">
@@ -125,11 +140,54 @@ export function TelaMapa({ dados, doenca, g, setG }: Ctx) {
           </ul>
         </div>
       )}
+      <div className="mt-4"><Nota>
+        <strong>Calor dentro do município (bairros e quarteirões): planejado.</strong> As fontes públicas usadas hoje (InfoDengue, GenBank)
+        só chegam ao município. O calor por bairro depende de dados de focos e de notificação georreferenciada da secretaria, que
+        entram no doutorado por termo de cooperação. Até lá, o zoom mostra o município inteiro com a sua cor, sem inventar detalhe.
+      </Nota></div>
+      <Vetor />
       <p className="mt-3 text-xs text-suave">
+        Cores: dengue em vermelho, chikungunya em verde-azulado e Zika em roxo; quanto mais escuro (ou mais claro, no tema escuro), maior o valor.
         Malha: IBGE, limites municipais {dados.malha?.ano_referencia ?? ""} (geometria simplificada para exibição).
         Classes por quantis dos valores positivos; a hachura marca município sem dado, que não é o mesmo que zero.
         {camada === "cobertura" && ` Razão = sequências de ${agr} no GenBank com coleta no trimestre e município identificado ÷ casos notificados de ${agr} (InfoDengue) no mesmo trimestre e município, mostrada por 100 casos: 0,01 equivale a 1 sequência a cada 10 mil casos. Mede o que está depositado e identificável na base pública, não o sequenciamento realizado pelos laboratórios, e não é representativa da circulação viral.`}
       </p>
     </Secao>
+    <AnaliseAutomatica dados={dados} doenca={doenca} setG={setG} setDoenca={setDoenca} irPara={irPara} />
+    </div>
+  );
+}
+
+/** Os três vírus lado a lado, cada um com a própria semana e a própria escala de cor. */
+function TresVirus({ dados, camada, g, setG }: { dados: Ctx["dados"]; camada: "incidencia" | "casos"; g: number | null; setG: (g: number | null) => void }) {
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      {DOENCAS.map((d) => <MapaDoVirus key={d} d={d} dados={dados} camada={camada} g={g} setG={setG} />)}
+    </div>
+  );
+}
+
+function MapaDoVirus({ d, dados, camada, g, setG }: { d: Doenca; dados: Ctx["dados"]; camada: "incidencia" | "casos"; g: number | null; setG: (g: number | null) => void }) {
+  const sem = dados.semana[d];
+  const valores = useMemo(() => {
+    const mp = new Map<number, ValorMapa>();
+    sem?.municipios.forEach((x) => {
+      const v = camada === "incidencia" ? x.i : x.c;
+      mp.set(x.g, v === null ? { v: null, motivo: "sem registro nesta SE" } : { v, detalhe: camada === "incidencia" ? `${fmtNum(x.c)} casos` : `${fmtNum(x.i, 1)} por 100 mil` });
+    });
+    return mp;
+  }, [sem, camada]);
+  const limites = useMemo(() => limitesQuantis([...valores.values()].map((v) => v.v ?? NaN)), [valores]);
+  const unidade = camada === "incidencia" ? "por 100 mil hab." : "casos";
+  if (!dados.malha) return null;
+  return (
+    <section aria-label={`${DOENCA_ROTULO[d]}, ${fmtSE(sem?.se)}`} className="min-w-0">
+      <h3 className="mb-1 text-sm font-bold">{DOENCA_ROTULO[d]} <span className="font-normal text-suave">· {sem ? fmtSE(sem.se) : "sem dado carregado"}</span></h3>
+      {sem ? (
+        <Mapa malha={dados.malha} valores={valores} limites={limites} unidade={unidade} paleta={d} compacto
+          formatar={(v) => fmtNum(v, camada === "incidencia" && v < 10 ? 1 : 0)}
+          titulo={`Mapa de ${DOENCA_ROTULO[d].toLowerCase()}: ${unidade}, ${fmtSE(sem.se)}`} selecionado={g} aoSelecionar={setG} aoSelecionarEstado={() => setG(null)} />
+      ) : <Nota tipo="aviso">Sem semana de {DOENCA_ROTULO[d].toLowerCase()} neste banco.</Nota>}
+    </section>
   );
 }

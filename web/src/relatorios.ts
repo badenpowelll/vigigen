@@ -4,7 +4,8 @@
 import type { Doenca, Serie } from "./dados/tipos";
 import type { Ctx } from "./telas/ctx";
 import { FONTE_GENBANK, FONTE_INFODENGUE } from "./telas/ctx";
-import { DOENCA_ROTULO, fmtDataHora, fmtSE } from "./util";
+import { DOENCA_ROTULO, carimboImpressao, fmtDataHora, fmtSE } from "./util";
+import { MARGEM_CABECALHO, MARGEM_RODAPE, cabecalhoERodape } from "./marcaPdf";
 import { SIGLA_VIRUS, genomicaDe, motivoSemGenomica } from "./dados/calc";
 
 export type Celula = string | number | null;
@@ -207,6 +208,7 @@ export function metadados(rel: Relatorio, ctx: Ctx, geradoEm: Date): [string, st
     ["Origem do dado", origem],
     ["Dado lido em", fmtDataHora(dados.lidoEm)],
     ["Arquivo gerado em", fmtDataHora(geradoEm.toISOString())],
+    ["Impressão", carimboImpressao(ctx.usuario, geradoEm)],
     ["Versão do método", VERSAO_METODO],
     ["Linhas", String(rel.linhas.length)],
     ["Natureza", "Dados reais das fontes públicas citadas; nenhum valor simulado ou completado."],
@@ -268,17 +270,19 @@ export async function gerarXlsx(rel: Relatorio, meta: [string, string][]): Promi
 
 export async function gerarPdf(rel: Relatorio, meta: [string, string][]): Promise<Blob> {
   const { jsPDF } = await import("jspdf");
-  const autoTable = (await import("jspdf-autotable")).default;
+  const modTabela = await import("jspdf-autotable");
+  // no navegador (Vite) o default já é a função; no Node (testes) vem embrulhado mais uma vez
+  const autoTable = (typeof modTabela.default === "function" ? modTabela.default
+    : (modTabela as unknown as { default: { default: typeof modTabela.default } }).default.default);
   const doc = new jsPDF({ orientation: rel.colunas.length > 5 ? "landscape" : "portrait", unit: "pt", format: "a4" });
   const larg = doc.internal.pageSize.getWidth();
-  const alt = doc.internal.pageSize.getHeight();
   const azul: [number, number, number] = [19, 81, 180]; // --blue-warm-vivid-70 do gov.br DS
-  doc.setFont("helvetica", "bold").setFontSize(15).setTextColor(...azul);
-  doc.text("VigiGen", 40, 44);
-  doc.setTextColor(20).setFontSize(12);
+  const carimbo = meta.find(([k]) => k === "Impressão")?.[1] ?? "";
+  doc.setFont("helvetica", "bold").setFontSize(12).setTextColor(20);
   const tit = doc.splitTextToSize(rel.titulo, larg - 80);
-  doc.text(tit, 40, 64);
-  let y = 64 + tit.length * 15;
+  let y = MARGEM_CABECALHO + 14;
+  doc.text(tit, 40, y);
+  y += tit.length * 15;
   doc.setFont("helvetica", "normal").setFontSize(8.5).setTextColor(60);
   for (const [k, v] of meta.filter(([k]) => k !== "Relatório")) {
     const t = doc.splitTextToSize(`${k}: ${v}`, larg - 80);
@@ -293,13 +297,10 @@ export async function gerarPdf(rel: Relatorio, meta: [string, string][]): Promis
     headStyles: { fillColor: azul, textColor: 255 },
     alternateRowStyles: { fillColor: [243, 243, 243] },
     columnStyles: Object.fromEntries(rel.colunas.map((c, i) => [i, { halign: c.tipo ? "right" : "left" }])),
-    margin: { left: 40, right: 40, bottom: 40 },
-    didDrawPage: () => {
-      doc.setFontSize(7.5).setTextColor(110);
-      doc.text(`VigiGen · ${rel.fonte}`, 40, alt - 20);
-      doc.text(`Página ${doc.getNumberOfPages()}`, larg - 40, alt - 20, { align: "right" });
-    },
+    margin: { left: 40, right: 40, top: MARGEM_CABECALHO + 8, bottom: MARGEM_RODAPE + 8 },
   });
+  // cabeçalho e rodapé com a logomarca e o carimbo em todas as páginas
+  cabecalhoERodape(doc, carimbo, `VigiGen · ${rel.fonte}`);
   return doc.output("blob");
 }
 

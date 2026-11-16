@@ -22,6 +22,17 @@ export const fmtData = (iso: string | null | undefined) =>
 export const fmtDataHora = (iso: string | number | null | undefined) =>
   iso ? new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 
+/** Data e hora com segundos, no fuso de Brasília (America/Sao_Paulo). */
+export const fmtDataHoraSeg = (d: Date) =>
+  d.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+
+/** Carimbo de quem exportou ou imprimiu e quando (regra do Baden, 14/11/2026). */
+export function carimboImpressao(usuario: { email: string; matricula: string | null } | null | undefined, em: Date): string {
+  const quando = `${fmtDataHoraSeg(em)} (horário de Brasília)`;
+  if (!usuario) return `Impresso em ${quando} · sem login neste painel: matrícula e e-mail indisponíveis`;
+  return `Impresso em ${quando} · matrícula ${usuario.matricula || "não cadastrada"} · ${usuario.email}`;
+}
+
 export function haQuanto(iso: string | number | null | undefined): string {
   if (!iso) return "data desconhecida";
   const ms = Date.now() - new Date(iso).getTime();
