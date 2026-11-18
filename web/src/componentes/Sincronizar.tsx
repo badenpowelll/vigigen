@@ -33,7 +33,7 @@ export function Sincronizar({ origem, aoConcluir }: { origem: Origem; aoConcluir
     }
   }, [aoConcluir]);
 
-  // ao abrir o painel, retoma uma sincronização que já esteja em andamento (sem erro na tela se a 021 não existir)
+  // ao abrir o painel, retoma uma sincronização que já esteja em andamento (sem erro na tela se a 022 não existir)
   useEffect(() => {
     let vivo = true;
     lerSincronizacao(origem).then((x) => { if (vivo) aplicar(x); }).catch(() => { /* silencioso na leitura inicial */ });

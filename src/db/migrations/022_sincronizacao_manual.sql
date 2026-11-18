@@ -1,4 +1,4 @@
--- VigiGen — 021: sincronização manual (botão "Sincronizar" do painel).
+-- VigiGen — 022: sincronização manual (botão "Sincronizar" do painel).
 -- NÃO APLICAR sem a aprovação do Baden.
 --
 -- O botão dispara, fora de hora, as MESMAS cargas que o agendamento já roda:

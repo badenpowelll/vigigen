@@ -318,7 +318,7 @@ sustentar"), a partir da proposta do módulo de focos. Detalhes em `docs/FOCOS.m
   agendado em produção, sem repetir endpoints no código do painel.
 - **Fila**: as Edge Functions guardam uma execução em andamento por fonte, e o
   GenBank recusa (409) um segundo vírus enquanto outro carrega. Por isso a
-  migração 021 dispara uma tarefa por fonte de cada vez e espera a anterior
+  migração 022 dispara uma tarefa por fonte de cada vez e espera a anterior
   terminar; uma tarefa temporária do pg_cron (a cada minuto) avança a fila,
   recalcula os indicadores ao final e se desliga. A sincronização termina mesmo
   que a página seja fechada.
@@ -329,5 +329,5 @@ sustentar"), a partir da proposta do módulo de focos. Detalhes em `docs/FOCOS.m
   Cliques repetidos devolvem a sincronização aberta; intervalo mínimo de 10 min.
 - **Procedência**: nada muda; cada resposta continua gravada crua em
   `public.bruto` pelas Edge Functions. Pedido e conclusão vão para `auditoria`.
-- **Nada em produção**: a migração 021 não foi aplicada. Até ser aplicada, o
+- **Nada em produção**: a migração 022 não foi aplicada. Até ser aplicada, o
   botão mostra "a sincronização manual ainda não está ativa no banco".
