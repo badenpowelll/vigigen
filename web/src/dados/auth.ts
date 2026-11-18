@@ -10,6 +10,8 @@ export interface Perfil {
   user_id: string;
   email: string;
   nome: string | null;
+  /** matrícula funcional; vem de meu_perfil() a partir da migração 022 (ausente antes dela) */
+  matricula?: string | null;
   administrador: boolean;
   ativo: boolean;
   vinculos: { papel: string; organizacao: string; tipo: string }[];

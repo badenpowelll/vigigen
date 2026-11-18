@@ -3,7 +3,9 @@ import type { Ctx } from "./ctx";
 import { FONTE_GENBANK, FONTE_INFODENGUE } from "./ctx";
 import { KpiCard, Secao, StatusBadge, IconeNivel, Nota, type Nivel } from "../componentes/basicos";
 import { Mapa, limitesQuantis, type ValorMapa } from "../componentes/Mapa";
-import { GraficoLinhas } from "../componentes/Graficos";
+import { ListaMunicipios } from "../componentes/ListaMunicipios";
+import { HistoricoMunicipio } from "../componentes/HistoricoMunicipio";
+import { SerieFiltrada } from "../componentes/SerieFiltrada";
 import { agregarEstado, atualidadeSerie, coberturaMunicipio, estadoDeteccao, genomicaDe, posicao, ultimos, valorNaSE } from "../dados/calc";
 import { ult12Retrato } from "../dados/useDados";
 import { DOENCA_ROTULO, COR_DOENCA, fmtData, fmtNum, fmtPct, fmtSE, fmtTrimestre } from "../util";
@@ -44,11 +46,6 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
   }, [sem]);
   const limites = useMemo(() => limitesQuantis([...valoresMapa.values()].map((v) => v.v ?? NaN)), [valoresMapa]);
 
-  const dominio: [Date, Date] = useMemo(() => [new Date(Date.UTC(2020, 0, 1)), new Date()], []);
-  const linhas = serie ? [
-    { nome: "Casos notificados", cor: COR_DOENCA[doenca], pontos: serie.se.map((_, k) => ({ t: new Date(serie.dt[k]), v: serie.c[k] })) },
-    { nome: "Casos estimados (nowcasting)", cor: "var(--texto-suave)", tracejado: true, pontos: serie.se.map((_, k) => ({ t: new Date(serie.dt[k]), v: serie.ce[k] })) },
-  ] : [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -116,15 +113,25 @@ export function VisaoGeral({ dados, doenca, g, nomeSel, serieMun, setG, irPara }
         <Secao titulo={`Incidência de ${DOENCA_ROTULO[doenca].toLowerCase()} por município`} subtitulo={`${periodo} · casos por 100 mil habitantes · clique para escolher`}>
           {dados.malha && sem ? (
             <Mapa malha={dados.malha} valores={valoresMapa} limites={limites} formatar={(v) => fmtNum(v, v < 10 ? 1 : 0)}
-              unidade="por 100 mil" titulo={`Mapa de incidência de ${DOENCA_ROTULO[doenca]}, ${periodo}`} selecionado={g} aoSelecionar={setG} />
+              unidade="por 100 mil" titulo={`Mapa de incidência de ${DOENCA_ROTULO[doenca]}, ${periodo}`} selecionado={g} aoSelecionar={setG} aoSelecionarEstado={() => setG(null)} />
           ) : <Nota>Sem dado para este período: malha ou semana não carregada.</Nota>}
         </Secao>
         <Secao titulo={`Série semanal · ${nomeSel}`} subtitulo={`${DOENCA_ROTULO[doenca]}, desde 2020`}>
-          {serie ? <GraficoLinhas series={linhas} dominio={dominio} unidade="casos por semana" titulo={`Casos semanais de ${DOENCA_ROTULO[doenca]} em ${nomeSel}`} altura={300} />
+          {serie ? <SerieFiltrada key={`${g}:${doenca}`} serie={serie} cor={COR_DOENCA[doenca]} nome={nomeSel} doencaRotulo={DOENCA_ROTULO[doenca]} />
             : <Nota>{g !== null && dados.origem === "retrato" ? "A série completa deste município só aparece com o dado ao vivo; o retrato embutido traz a série do estado e as últimas 12 semanas de cada município." : "Carregando série…"}</Nota>}
-          <p className="mt-2 text-xs text-suave">A linha tracejada é a estimativa do InfoDengue que corrige o atraso de notificação nas semanas recentes.</p>
         </Secao>
       </div>
+
+      {g !== null && <HistoricoMunicipio dados={dados} g={g} nomeSel={nomeSel} doenca={doenca} />}
+
+      {g === null && (
+        <Secao id="lista-municipios" titulo={`Municípios do Rio Grande do Norte · ${DOENCA_ROTULO[doenca]}`}
+          subtitulo={est ? `${periodo} · total do estado: ${fmtNum(est.c)} casos notificados e ${fmtNum(est.ce)} estimados pelo InfoDengue, em ${est.nComDado} de ${est.nMun} municípios com registro` : periodo}>
+          {sem?.municipios.length
+            ? <ListaMunicipios municipios={sem.municipios} periodo={periodo} aoSelecionar={setG} />
+            : <Nota>Sem dado para este período: o InfoDengue não publicou municípios nesta semana.</Nota>}
+        </Secao>
+      )}
     </div>
   );
 }

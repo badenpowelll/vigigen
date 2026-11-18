@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import type { Ctx } from "./ctx";
-import { Nota, Secao } from "../componentes/basicos";
+import { Marca, Nota, Secao } from "../componentes/basicos";
 import { gerarCsv, gerarPdf, gerarXlsx, metadados, montarRelatorios, nomeArquivo, prepararDownloads, salvar, textoCelula } from "../relatorios";
-import { registrarUso } from "../util";
+import { carimboImpressao, registrarUso } from "../util";
 
 const PREVIA = 25;
 type Formato = "csv" | "xlsx" | "pdf";
@@ -12,6 +13,7 @@ export function TelaRelatorios(ctx: Ctx) {
   const [id, setId] = useState(relatorios[0].id);
   const [ocupado, setOcupado] = useState<Formato | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
+  const [impressoEm, setImpressoEm] = useState<Date>(() => new Date());
   const rel = relatorios.find((r) => r.id === id) ?? relatorios[0];
   const vazio = rel.linhas.length === 0;
 
@@ -35,6 +37,7 @@ export function TelaRelatorios(ctx: Ctx) {
   }
 
   function imprimir() {
+    flushSync(() => setImpressoEm(new Date()));   // carimbo com o segundo exato da impressão
     document.body.classList.add("imprimindo-relatorio");
     const fim = () => { document.body.classList.remove("imprimindo-relatorio"); removeEventListener("afterprint", fim); };
     addEventListener("afterprint", fim);
@@ -65,6 +68,26 @@ export function TelaRelatorios(ctx: Ctx) {
       </Secao>
 
       <div id="area-impressao">
+        {/* Moldura de impressão: thead e tfoot se repetem em cada página impressa (logomarca e carimbo).
+            Na tela a tabela é só um bloco; o cabeçalho e o rodapé ficam ocultos. */}
+        <table className="impressao-moldura">
+          <thead className="impressao-cabecalho" aria-hidden="true">
+            <tr><td>
+              <div className="impressao-faixa">
+                <Marca className="h-8 w-auto" titulo="" />
+                <div><strong>VigiGen</strong><span>Vigilância genômica de arboviroses · Rio Grande do Norte</span></div>
+              </div>
+            </td></tr>
+          </thead>
+          <tfoot className="impressao-rodape" aria-hidden="true">
+            <tr><td>
+              <div className="impressao-faixa">
+                <Marca className="h-4 w-auto" titulo="" />
+                <span>{carimboImpressao(ctx.usuario, impressoEm)} · VigiGen · {rel.fonte}</span>
+              </div>
+            </td></tr>
+          </tfoot>
+          <tbody><tr><td>
         <Secao id="rel-previa" titulo={rel.titulo}
           subtitulo={<>Fonte: {rel.fonte}</>}
           acoes={
@@ -114,6 +137,8 @@ export function TelaRelatorios(ctx: Ctx) {
             </>
           )}
         </Secao>
+          </td></tr></tbody>
+        </table>
       </div>
     </div>
   );

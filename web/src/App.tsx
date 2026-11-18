@@ -13,6 +13,7 @@ import { TelaPerfil } from "./telas/TelaPerfil";
 import { TelaSobre } from "./telas/TelaSobre";
 import { TelaRelatorios } from "./telas/TelaRelatorios";
 import { Sininho } from "./componentes/Sininho";
+import { Sincronizar } from "./componentes/Sincronizar";
 import { Atalhos, SeletorTema } from "./componentes/Acessibilidade";
 import type { Ctx } from "./telas/ctx";
 import { TelaAdmin } from "./admin/TelaAdmin";
@@ -43,6 +44,9 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
   const dados = useDados();
   const admin = !!perfil?.administrador;
   const abas = ABAS.filter((a) => a.id !== "admin" || admin);
+  // Sincronizar: no painel web, só administrador (o banco confere de novo); no
+  // artefato do claude.ai, quem lê pelo próprio conector Supabase (acesso de dono).
+  const podeSincronizar = (dados.origem === "supabase" && admin) || dados.origem === "conector";
   const [aba, setAba] = useState<Aba>(() => abaDoHash(admin));
   const [doenca, setDoenca] = useState<Doenca>("dengue");
   const [g, setG] = useState<number | null>(null);
@@ -54,19 +58,21 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
   );
 
   // Natal como padrão, achado pelo nome (não por código fixo no código-fonte).
+  // Só na primeira carga: depois, escolher "Rio Grande do Norte (estado)" (g = null) precisa ficar.
+  const padraoAplicado = useRef(false);
   useEffect(() => {
-    if (g === null && municipios.length) {
-      const natal = municipios.find((m) => m.n.toLocaleLowerCase("pt-BR") === "natal");
-      if (natal) setG(natal.g);
-    }
-  }, [municipios, g]);
+    if (padraoAplicado.current || !municipios.length) return;
+    padraoAplicado.current = true;
+    const natal = municipios.find((m) => m.n.toLocaleLowerCase("pt-BR") === "natal");
+    if (natal) setG((atual) => atual ?? natal.g);
+  }, [municipios]);
 
   useEffect(() => {
     let vivo = true;
     setSerieMun(null);
     if (g !== null) dados.serieMunicipio(g, doenca).then((s) => vivo && setSerieMun(s));
     return () => { vivo = false; };
-  }, [g, doenca, dados.serieMunicipio, dados.origem]);
+  }, [g, doenca, dados.serieMunicipio, dados.origem, dados.versao]);
 
   useEffect(() => {
     const f = () => setAba(abaDoHash(admin));
@@ -103,7 +109,8 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
   }, [admin]);
 
   const nomeSel = g === null ? "Rio Grande do Norte" : municipios.find((m) => m.g === g)?.n ?? "—";
-  const ctx: Ctx = { dados, doenca, g, nomeSel, serieMun, setG: (x) => { setG(x); registrarUso("selecao_municipio"); }, irPara };
+  const ctx: Ctx = { dados, doenca, g, nomeSel, serieMun, setG: (x) => { setG(x); registrarUso("selecao_municipio"); }, setDoenca: (d) => { setDoenca(d); registrarUso(`doenca:${d}`); }, irPara,
+    usuario: perfil ? { email: perfil.email, matricula: perfil.matricula ?? null } : null };
 
   return (
     <div className="min-h-screen">
@@ -120,6 +127,7 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Origem {...dados} />
+            {podeSincronizar && dados.origem && <Sincronizar origem={dados.origem} aoConcluir={dados.recarregar} />}
             <SeletorTema />
             <Atalhos abas={abas.map((a) => a.r)} />
             <Sininho alertas={dados.resumo?.alertas ?? null} nomes={municipios} aoAbrir={() => irPara("alertas")} />
@@ -202,11 +210,19 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
 }
 
 function Origem({ origem, lidoEm, carregando }: ReturnType<typeof useDados>) {
-  const texto =
-    origem === "conector" ? "Lido do banco agora, pelo seu conector Supabase"
-      : origem === "supabase" ? "Lido do banco agora"
-        : origem === "retrato" ? "Retrato embutido do banco"
-          : "Sem leitura";
+  const aoVivo = origem === "conector" || origem === "supabase";
+  if (aoVivo && lidoEm) {
+    const d = new Date(lidoEm);
+    const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    const dia = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    return (
+      <div className="rounded-pilula bg-[var(--superficie-2)] px-3 py-1 text-xs" role="status">
+        <span className="font-semibold">Sincronizado às {hora}</span>
+        <span className="text-suave"> · {dia} ({haQuanto(lidoEm)})</span>
+      </div>
+    );
+  }
+  const texto = origem === "retrato" ? "Retrato embutido do banco" : "Sem leitura";
   return (
     <div className="rounded-pilula bg-[var(--superficie-2)] px-3 py-1 text-xs" role="status">
       <span className="font-semibold">{carregando && origem === "retrato" ? "Tentando dado ao vivo… " : ""}{texto}</span>

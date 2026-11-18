@@ -307,3 +307,63 @@ sustentar"), a partir da proposta do módulo de focos. Detalhes em `docs/FOCOS.m
   Fica vazia até o acordo com o LAIS/UFRN (PEP) ou a SESAP-RN (GAL).
 - **Nada em produção**: a migração 020 não foi aplicada e o workflow `focos.yml`
   só roda manualmente; o agendamento fica comentado até autorização do Baden.
+
+## D-023 — Análise automática por regras no painel, não por modelo de IA (14/11/2026)
+
+- **Pedido**: um bloco abaixo do mapa de calor que responda quais municípios
+  têm a maior incidência de cada vírus, que atuação dos gestores é sugerida e
+  outras perguntas pertinentes.
+- **Decisão**: regras fixas em `web/src/dados/analise.ts`, aplicadas aos dados
+  já carregados no painel (InfoDengue por município e semana; indicador
+  genômico do GenBank). O mesmo dado gera sempre o mesmo texto, e cada resposta
+  mostra a regra e a fonte ("Como foi calculado").
+- **Por quê**: o módulo de IA está fora do escopo da Fase 1 (CLAUDE.md), e um
+  texto reprodutível é avaliável no DSR; um modelo generativo exigiria backend,
+  registro de versão e avaliação próprios.
+- **Condutas**: sugestões ligadas a sinais nos dados (incidência no quartil
+  superior, alta semanal, Rt > 1 com probabilidade ≥ 90% e ≥ 5 casos, nível 3–4,
+  incidência alta com notificação parada), redigidas a partir dos eixos do
+  *Plano de contingência nacional para dengue, chikungunya e Zika* (MS,
+  SVSA/DEDT/CGARB, 2025). Não descrevem o que a gestão fez (não há esse dado) e
+  não classificam o município nos estágios do plano, que dependem do canal
+  endêmico local, ainda não calculado pelo VigiGen.
+
+## D-024 — Logomarca e carimbo de impressão em todo PDF e impressão (14/11/2026)
+
+- **Regra do Baden**: todo relatório em PDF ou impresso traz cabeçalho e rodapé
+  com a logomarca Hélice-pulso e, em cada página, a matrícula e o e-mail de quem
+  imprimiu e a data e hora com segundos (horário de Brasília).
+- **PDF (jsPDF)**: a marca é desenhada em vetor (`web/src/marcaPdf.ts`, mesma
+  geometria do SVG), em todas as páginas, com "Página X de Y".
+- **Impressão do navegador**: moldura de tabela (thead/tfoot) que o navegador
+  repete em cada página; o carimbo é gerado no segundo do clique em Imprimir.
+- **Matrícula**: o perfil não tinha esse campo. A migração 022 (NÃO aplicada)
+  acrescenta `perfil.matricula` e a devolve em `meu_perfil()`. Até ela ser
+  aplicada e preenchida, o carimbo diz "matrícula não cadastrada"; no artefato
+  do claude.ai, que não tem login, diz que não há usuário identificado.
+- CSV e XLSX levam o mesmo carimbo na linha "Impressão" dos metadados.
+
+## D-025 — Botão "Sincronizar" no painel (18/11/2026)
+
+- **Pedido do Baden**: um botão no cabeçalho que atualiza todas as bases na hora,
+  além do agendamento automático.
+- **O que o botão faz**: pede ao banco que rode agora as mesmas tarefas de início
+  de carga do pg_cron (`vigigen-semanal-*`, `vigigen-diario-*`, `vigigen-mensal-*`).
+  A lista é lida de `cron.job` no momento do pedido, então acompanha o que está
+  agendado em produção, sem repetir endpoints no código do painel.
+- **Fila**: as Edge Functions guardam uma execução em andamento por fonte, e o
+  GenBank recusa (409) um segundo vírus enquanto outro carrega. Por isso a
+  migração 022 dispara uma tarefa por fonte de cada vez e espera a anterior
+  terminar; uma tarefa temporária do pg_cron (a cada minuto) avança a fila,
+  recalcula os indicadores ao final e se desliga. A sincronização termina mesmo
+  que a página seja fechada.
+- **Segurança**: nenhuma chave de serviço no navegador. Painel web: só
+  administrador (`public.sincronizar_fontes()` chama `app.exigir_admin()`).
+  Artefato do claude.ai: o conector Supabase do próprio visitante chama
+  `app.sincronizar_pedir()`, que não tem grant para anon/authenticated.
+  Cliques repetidos devolvem a sincronização aberta; intervalo mínimo de 10 min.
+- **Procedência**: nada muda; cada resposta continua gravada crua em
+  `public.bruto` pelas Edge Functions. Pedido e conclusão vão para `auditoria`.
+- **Produção**: a migração 023 foi aplicada em 18/11/2026 com a aprovação do
+  Baden. No histórico do Supabase ela consta como `022_sincronizacao_manual`;
+  foi renumerada para 023 porque a 022 é a `022_matricula` (claude/mapa-interativo).

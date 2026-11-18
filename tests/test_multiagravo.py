@@ -66,7 +66,7 @@ def test_cadeia_011_a_016_com_administracao_real():
         assert r.returncode == 0, r.stderr
     arquivos = ["tests/fixtures/sql/FIXTURE_esquema_minimo.sql", "tests/fixtures/sql/FIXTURE_stub_auth_admin.sql"] + [
         f"src/db/migrations/{m}.sql" for m in
-        ("011_administracao", "012_genbank_diario", "013_multiagravo", "015_seguranca", "016_sla_painel")]
+        ("011_administracao", "012_genbank_diario", "013_multiagravo", "015_seguranca", "016_sla_painel", "022_matricula")]
     for arq in arquivos:
         r = subprocess.run(["psql", alvo, "-q", "-v", "ON_ERROR_STOP=1", "-f", arq],
                            cwd=RAIZ, capture_output=True, text=True)
@@ -77,3 +77,16 @@ def test_cadeia_011_a_016_com_administracao_real():
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert r.stdout.strip() == "t|t|95"
+    # 022: meu_perfil() devolve a matrícula (nula até ser cadastrada)
+    u = "00000000-0000-0000-0000-0000000000a1"
+    r = subprocess.run(["psql", alvo, "-q", "-v", "ON_ERROR_STOP=1", "-Atc",
+                        "set session_replication_role = replica; "  # sem o gatilho de convite da 011
+                        f"insert into auth.users (id, email) values ('{u}', 'fixture@exemplo.org'); "
+                        f"insert into public.perfil (user_id, email) values ('{u}', 'fixture@exemplo.org') on conflict (user_id) do nothing; "
+                        f"set teste.uid = '{u}'; "
+                        "select coalesce(public.meu_perfil()->>'matricula', 'nula'); "
+                        f"update public.perfil set matricula = 'FIXTURE-123' where user_id = '{u}'; "
+                        "select public.meu_perfil()->>'matricula';"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.split() == ["nula", "FIXTURE-123"], r.stdout
