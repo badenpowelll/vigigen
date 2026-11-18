@@ -326,3 +326,7 @@ main:focus { outline: none; }
 .tabela th { text-align: left; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--texto-suave);
   font-weight: 600; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borda); white-space: nowrap; }
 .tabela td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borda); vertical-align: top; }
+
+/* ícone do botão Sincronizar enquanto a sincronização manual roda */
+@keyframes vg-girar { to { transform: rotate(360deg); } }
+.girando { animation: vg-girar 1.1s linear infinite; transform-origin: 50% 50%; }

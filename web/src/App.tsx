@@ -13,6 +13,7 @@ import { TelaPerfil } from "./telas/TelaPerfil";
 import { TelaSobre } from "./telas/TelaSobre";
 import { TelaRelatorios } from "./telas/TelaRelatorios";
 import { Sininho } from "./componentes/Sininho";
+import { Sincronizar } from "./componentes/Sincronizar";
 import { Atalhos, SeletorTema } from "./componentes/Acessibilidade";
 import type { Ctx } from "./telas/ctx";
 import { TelaAdmin } from "./admin/TelaAdmin";
@@ -43,6 +44,9 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
   const dados = useDados();
   const admin = !!perfil?.administrador;
   const abas = ABAS.filter((a) => a.id !== "admin" || admin);
+  // Sincronizar: no painel web, só administrador (o banco confere de novo); no
+  // artefato do claude.ai, quem lê pelo próprio conector Supabase (acesso de dono).
+  const podeSincronizar = (dados.origem === "supabase" && admin) || dados.origem === "conector";
   const [aba, setAba] = useState<Aba>(() => abaDoHash(admin));
   const [doenca, setDoenca] = useState<Doenca>("dengue");
   const [g, setG] = useState<number | null>(null);
@@ -66,7 +70,7 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
     setSerieMun(null);
     if (g !== null) dados.serieMunicipio(g, doenca).then((s) => vivo && setSerieMun(s));
     return () => { vivo = false; };
-  }, [g, doenca, dados.serieMunicipio, dados.origem]);
+  }, [g, doenca, dados.serieMunicipio, dados.origem, dados.versao]);
 
   useEffect(() => {
     const f = () => setAba(abaDoHash(admin));
@@ -120,6 +124,7 @@ export default function App({ perfil = null }: { perfil?: Perfil | null }) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Origem {...dados} />
+            {podeSincronizar && dados.origem && <Sincronizar origem={dados.origem} aoConcluir={dados.recarregar} />}
             <SeletorTema />
             <Atalhos abas={abas.map((a) => a.r)} />
             <Sininho alertas={dados.resumo?.alertas ?? null} nomes={municipios} aoAbrir={() => irPara("alertas")} />

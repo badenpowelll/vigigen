@@ -307,3 +307,27 @@ sustentar"), a partir da proposta do módulo de focos. Detalhes em `docs/FOCOS.m
   Fica vazia até o acordo com o LAIS/UFRN (PEP) ou a SESAP-RN (GAL).
 - **Nada em produção**: a migração 020 não foi aplicada e o workflow `focos.yml`
   só roda manualmente; o agendamento fica comentado até autorização do Baden.
+
+## D-023 — Botão "Sincronizar" no painel (18/11/2026)
+
+- **Pedido do Baden**: um botão no cabeçalho que atualiza todas as bases na hora,
+  além do agendamento automático.
+- **O que o botão faz**: pede ao banco que rode agora as mesmas tarefas de início
+  de carga do pg_cron (`vigigen-semanal-*`, `vigigen-diario-*`, `vigigen-mensal-*`).
+  A lista é lida de `cron.job` no momento do pedido, então acompanha o que está
+  agendado em produção, sem repetir endpoints no código do painel.
+- **Fila**: as Edge Functions guardam uma execução em andamento por fonte, e o
+  GenBank recusa (409) um segundo vírus enquanto outro carrega. Por isso a
+  migração 021 dispara uma tarefa por fonte de cada vez e espera a anterior
+  terminar; uma tarefa temporária do pg_cron (a cada minuto) avança a fila,
+  recalcula os indicadores ao final e se desliga. A sincronização termina mesmo
+  que a página seja fechada.
+- **Segurança**: nenhuma chave de serviço no navegador. Painel web: só
+  administrador (`public.sincronizar_fontes()` chama `app.exigir_admin()`).
+  Artefato do claude.ai: o conector Supabase do próprio visitante chama
+  `app.sincronizar_pedir()`, que não tem grant para anon/authenticated.
+  Cliques repetidos devolvem a sincronização aberta; intervalo mínimo de 10 min.
+- **Procedência**: nada muda; cada resposta continua gravada crua em
+  `public.bruto` pelas Edge Functions. Pedido e conclusão vão para `auditoria`.
+- **Nada em produção**: a migração 021 não foi aplicada. Até ser aplicada, o
+  botão mostra "a sincronização manual ainda não está ativa no banco".

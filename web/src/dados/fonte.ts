@@ -57,13 +57,26 @@ function literal(v: unknown): string {
   return "'" + String(v).replace(/'/g, "''") + "'";
 }
 
-export async function viaConector<T>(funcao: string, args: unknown[] = []): Promise<{ dado: T; em: number }> {
+/** fresco: ignora o cache do runtime (usado depois de uma sincronização manual). */
+export async function viaConector<T>(funcao: string, args: unknown[] = [], fresco = false): Promise<{ dado: T; em: number }> {
+  if (!/^painel_[a-z_]+$/.test(funcao)) throw { codigo: "bad_request", mensagem: "função inválida" } as ErroFonte;
+  return executarConector<T>(`select public.${funcao}(${args.map(literal).join(", ")}) as r`,
+    { cache: { staleTime: fresco ? 0 : 120_000, gcTime: 3_600_000 } });
+}
+
+// Sincronização manual pelo conector (migração 021). Consultas fixas, sem
+// parâmetro vindo da tela; as funções ficam no esquema app, fora da API pública.
+export const sincronizacaoConector = {
+  pedir: () => executarConector<unknown>("select app.sincronizar_pedir('conector', 'conector:' || session_user) as r"),
+  estado: () => executarConector<unknown>("select app.sincronizacao_json(null) as r"),
+};
+
+async function executarConector<T>(query: string, opcoes?: unknown): Promise<{ dado: T; em: number }> {
   const mcp = await obterMcp();
   if (!mcp) throw { codigo: "sem_conector", mensagem: "Conector indisponível nesta visualização" } as ErroFonte;
-  if (!/^painel_[a-z_]+$/.test(funcao)) throw { codigo: "bad_request", mensagem: "função inválida" } as ErroFonte;
-  const query = `select public.${funcao}(${args.map(literal).join(", ")}) as r`;
-  const chamar = () => mcp.callTool(SERVIDOR_MCP, FERRAMENTA_MCP, { project_id: PROJETO_SUPABASE, query },
-    { cache: { staleTime: 120_000, gcTime: 3_600_000 } });
+  const chamar = () => (opcoes === undefined
+    ? mcp.callTool(SERVIDOR_MCP, FERRAMENTA_MCP, { project_id: PROJETO_SUPABASE, query })
+    : mcp.callTool(SERVIDOR_MCP, FERRAMENTA_MCP, { project_id: PROJETO_SUPABASE, query }, opcoes));
   let res: Awaited<ReturnType<typeof chamar>>;
   try {
     res = await chamar();
@@ -87,10 +100,10 @@ export async function viaConector<T>(funcao: string, args: unknown[] = []): Prom
 }
 
 export const consultas = {
-  resumo: () => viaConector<Resumo>("painel_resumo"),
-  malha: () => viaConector<Malha>("painel_malha"),
-  semana: (d: Doenca) => viaConector<Semana>("painel_semana", [d]),
-  serie: (g: number | null, d: Doenca, desde = 202001) => viaConector<Serie>("painel_serie", [g, d, desde]),
+  resumo: (fresco = false) => viaConector<Resumo>("painel_resumo", [], fresco),
+  malha: (fresco = false) => viaConector<Malha>("painel_malha", [], fresco),
+  semana: (d: Doenca, fresco = false) => viaConector<Semana>("painel_semana", [d], fresco),
+  serie: (g: number | null, d: Doenca, desde = 202001, fresco = false) => viaConector<Serie>("painel_serie", [g, d, desde], fresco),
 };
 
 export function mensagemErro(e: ErroFonte): string {
