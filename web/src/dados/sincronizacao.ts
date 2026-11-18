@@ -1,5 +1,5 @@
 // Sincronização manual (botão "Sincronizar"): pede ao banco que rode agora as
-// mesmas cargas do agendamento automático (migração 022). O navegador nunca
+// mesmas cargas do agendamento automático (migração 023). O navegador nunca
 // fala com as APIs externas nem guarda chave de serviço: só chama funções do
 // banco, que conferem a permissão e disparam as Edge Functions pelo pg_net.
 import { sincronizacaoConector, type ErroFonte, type Origem } from "./fonte";
@@ -63,7 +63,7 @@ export function mensagemSincronizacao(e: ErroFonte | { codigo?: string; mensagem
   const m = e?.mensagem ?? "";
   if (e?.codigo === "42501" || /apenas administradores/.test(m)) return "Só administradores podem sincronizar.";
   if (e?.codigo === "PGRST202" || e?.codigo === "42883" || /does not exist|could not find the function/i.test(m))
-    return "A sincronização manual ainda não está ativa no banco (migração 022 não aplicada).";
+    return "A sincronização manual ainda não está ativa no banco (migração 023 não aplicada).";
   if (/nenhuma carga agendada/.test(m)) return "O banco não tem cargas agendadas para repetir agora.";
   if (e?.codigo === "sem_conector") return "Sem conector Supabase nesta visualização.";
   return `O banco recusou o pedido: ${m || e?.codigo || "erro desconhecido"}.`;

@@ -46,3 +46,14 @@ umidade relativa. -9999 e vazio viram nulo.
 - Indicadores: a cada 6 h
 - SINAN e CNES (migração 019, **não aplicada**): SINAN toda terça 06:00 UTC; CNES dia 2 de cada mês 07:00 UTC
 - INMET: sem agendamento no banco; carga pelo CLI quando o INMET publica o arquivo do mês
+
+## Imagens do vetor e dos vírus (painel, aba Mapa)
+
+Baixadas do Wikimedia Commons em 2026-11-14 (API `imageinfo` com `extmetadata` para licença e autor), redimensionadas para 360 px e embutidas em `web/src/componentes/vetorImagens.ts`. Uso ilustrativo, sem dado.
+
+| Imagem | Autor | Licença | Página |
+|---|---|---|---|
+| *Aedes aegypti* | James Gathany, CDC (PHIL #9258) | Domínio público | https://commons.wikimedia.org/wiki/File:Aedes_aegypti_CDC-Gathany.jpg |
+| Partículas de DENV (TEM colorizada) | CDC e NIAID | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Dengue_Virus_Particles_(53253718295).jpg |
+| Partículas de CHIKV (TEM) | Cynthia Goldsmith, CDC (PHIL #17369) | Domínio público | https://commons.wikimedia.org/wiki/File:Chikungunya_virus_particles-PHIL-17369.jpg |
+| Partículas de ZIKV (TEM colorizada) | NIAID, Rocky Mountain Laboratories | CC BY 2.0 | https://commons.wikimedia.org/wiki/File:Zika_Virus_Particles.jpg |

@@ -64,7 +64,7 @@ export async function viaConector<T>(funcao: string, args: unknown[] = [], fresc
     { cache: { staleTime: fresco ? 0 : 120_000, gcTime: 3_600_000 } });
 }
 
-// Sincronização manual pelo conector (migração 022). Consultas fixas, sem
+// Sincronização manual pelo conector (migração 023). Consultas fixas, sem
 // parâmetro vindo da tela; as funções ficam no esquema app, fora da API pública.
 export const sincronizacaoConector = {
   pedir: () => executarConector<unknown>("select app.sincronizar_pedir('conector', 'conector:' || session_user) as r"),

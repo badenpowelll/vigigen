@@ -222,6 +222,7 @@ a { color: var(--interactive); }
   background-size: 6px 6px; background-repeat: no-repeat;
 }
 .br-campo:hover { background-color: var(--superficie-2); }
+.br-campo.texto { background-image: none; padding-right: var(--spacing-scale-2x); }
 .br-rotulo { font-size: var(--font-size-scale-base); font-weight: var(--font-weight-semi-bold); color: var(--texto); }
 
 /* Rodapé no padrão br-footer: fundo blue-warm-vivid-90, texto claro */
@@ -248,6 +249,8 @@ a { color: var(--interactive); }
 .tabela-relatorio th { padding: 6px 10px; border-bottom: 2px solid var(--borda); font-weight: 600; white-space: nowrap; }
 .tabela-relatorio td { padding: 5px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
 .so-impressao { display: none; }
+.impressao-moldura, .impressao-moldura > tbody, .impressao-moldura > tbody > tr, .impressao-moldura > tbody > tr > td { display: block; }
+.impressao-cabecalho, .impressao-rodape { display: none; }
 @media print {
   body.imprimindo-relatorio * { visibility: hidden; }
   body.imprimindo-relatorio #area-impressao, body.imprimindo-relatorio #area-impressao * { visibility: visible; }
@@ -257,6 +260,20 @@ a { color: var(--interactive); }
   body.imprimindo-relatorio .overflow-x-auto { overflow: visible; }
   body.imprimindo-relatorio #area-impressao .cartao { box-shadow: none; border: 0; }
   body.imprimindo-relatorio .tabela-relatorio { font-size: 9pt; }
+  /* moldura: thead/tfoot repetidos pelo navegador em cada página */
+  @page { margin: 12mm; }
+  body.imprimindo-relatorio .impressao-moldura { display: table; width: 100%; border-collapse: collapse; }
+  body.imprimindo-relatorio .impressao-moldura > tbody { display: table-row-group; }
+  body.imprimindo-relatorio .impressao-moldura > tbody > tr { display: table-row; }
+  body.imprimindo-relatorio .impressao-moldura > tbody > tr > td { display: table-cell; }
+  body.imprimindo-relatorio .impressao-cabecalho { display: table-header-group; }
+  body.imprimindo-relatorio .impressao-rodape { display: table-footer-group; }
+  body.imprimindo-relatorio .impressao-faixa { display: flex; align-items: center; gap: 8px; color: #222; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body.imprimindo-relatorio .impressao-cabecalho .impressao-faixa { padding-bottom: 4px; margin-bottom: 8px; border-bottom: 1.5px solid #1351b4; }
+  body.imprimindo-relatorio .impressao-cabecalho strong { display: block; color: #1351b4; font-size: 13pt; line-height: 1.1; }
+  body.imprimindo-relatorio .impressao-cabecalho span { display: block; font-size: 8pt; color: #555; }
+  body.imprimindo-relatorio .impressao-rodape .impressao-faixa { padding-top: 4px; margin-top: 8px; border-top: 0.5px solid #bbb; font-size: 7.5pt; color: #444; }
+
 }
 
 /* ---------- Dica (tooltip acessível) ---------- */
@@ -326,6 +343,34 @@ main:focus { outline: none; }
 .tabela th { text-align: left; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--texto-suave);
   font-weight: 600; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borda); white-space: nowrap; }
 .tabela td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--borda); vertical-align: top; }
+
+/* ---------- Rampas do mapa por vírus (calor por agravo) ---------- */
+:root {
+  --dengue-1: #fde0dd; --dengue-2: #fcbba1; --dengue-3: #fc9272; --dengue-4: #fb6a4a; --dengue-5: #de2d26; --dengue-6: #a50f15;
+  --chikungunya-1: #d7f0ec; --chikungunya-2: #a8ddd4; --chikungunya-3: #6cc3b5; --chikungunya-4: #2fa392; --chikungunya-5: #13806f; --chikungunya-6: #075548;
+  --zika-1: #ece4f7; --zika-2: #d3c2ee; --zika-3: #b197e0; --zika-4: #8c67cc; --zika-5: #6a3fb0; --zika-6: #47237e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --dengue-1: #3b1214; --dengue-2: #6b1a1d; --dengue-3: #a32a2a; --dengue-4: #d9443b; --dengue-5: #f2735f; --dengue-6: #ffb3a3;
+    --chikungunya-1: #0d2b27; --chikungunya-2: #134a43; --chikungunya-3: #19705f; --chikungunya-4: #22a08a; --chikungunya-5: #4fc7b0; --chikungunya-6: #9ce8d9;
+    --zika-1: #22163a; --zika-2: #3a2463; --zika-3: #563894; --zika-4: #7a55c4; --zika-5: #a483e3; --zika-6: #d0bdf7;
+  }
+}
+:root[data-theme="dark"] {
+  --dengue-1: #3b1214; --dengue-2: #6b1a1d; --dengue-3: #a32a2a; --dengue-4: #d9443b; --dengue-5: #f2735f; --dengue-6: #ffb3a3;
+  --chikungunya-1: #0d2b27; --chikungunya-2: #134a43; --chikungunya-3: #19705f; --chikungunya-4: #22a08a; --chikungunya-5: #4fc7b0; --chikungunya-6: #9ce8d9;
+  --zika-1: #22163a; --zika-2: #3a2463; --zika-3: #563894; --zika-4: #7a55c4; --zika-5: #a483e3; --zika-6: #d0bdf7;
+}
+.mapa-palco { touch-action: none; cursor: grab; }
+.mapa-palco.arrastando { cursor: grabbing; }
+.mapa-palco:focus-visible { outline: 3px solid var(--focus, #c2850c); outline-offset: 2px; }
+.mapa-zoom { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 4px; }
+.mapa-zoom button { width: 36px; height: 36px; border-radius: 6px; border: 1px solid var(--borda); background: var(--superficie); color: var(--texto); font-weight: 700; font-size: 18px; line-height: 1; }
+.mapa-zoom button:hover { background: var(--superficie-2); }
+.mapa-zoom button:focus-visible { outline: 3px solid var(--focus, #c2850c); outline-offset: 2px; }
+.mapa-aviso { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); padding: .35rem .75rem; border-radius: 999px; background: var(--texto); color: var(--superficie); font-size: .8rem; pointer-events: none; }
+.mapa-rotulo { fill: var(--texto); paint-order: stroke; stroke: var(--superficie); stroke-linejoin: round; pointer-events: none; font-weight: 600; }
 
 /* ícone do botão Sincronizar enquanto a sincronização manual roda */
 @keyframes vg-girar { to { transform: rotate(360deg); } }

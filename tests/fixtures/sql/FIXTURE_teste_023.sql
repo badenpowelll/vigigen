@@ -1,4 +1,4 @@
--- Teste da migração 022 (sincronização manual) num Postgres descartável.
+-- Teste da migração 023 (sincronização manual) num Postgres descartável.
 -- Roda depois da cadeia esquema mínimo + stub de auth + 011, 012, 013, 015, 016.
 -- Só para testes: nada aqui roda em produção. Os "disparos" não saem para a
 -- rede: app.disparar é trocada por um stub que só grava uma resposta HTTP falsa,
@@ -28,7 +28,7 @@ select cron.schedule('vigigen-continuar-infodengue', '*/3 * * * *', $$select app
 select cron.schedule('vigigen-mensal-ibge', '0 8 1 * *', $$select app.disparar('ingest-ibge', '{}'::jsonb)$$);
 select cron.schedule('vigigen-indicadores', '15 */6 * * *', $$select public.calcular_indicadores()$$);
 
-\i src/db/migrations/022_sincronizacao_manual.sql
+\i src/db/migrations/023_sincronizacao_manual.sql
 
 -- usuário comum e administrador (sem o fluxo de convite da 011, que não é o alvo aqui)
 alter table auth.users disable trigger user;
@@ -110,5 +110,5 @@ begin
   r := app.sincronizar_pedir('conector', 'conector:FIXTURE');
   assert r ? 'aviso' and r->>'concluida_em' is not null, 'intervalo mínimo';
   assert (select count(*) from app.sincronizacao) = 1, 'nenhuma nova';
-  raise notice 'OK: migração 022 passou em todos os testes';
+  raise notice 'OK: migração 023 passou em todos os testes';
 end $$;

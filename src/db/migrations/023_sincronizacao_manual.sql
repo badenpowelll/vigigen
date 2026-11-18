@@ -1,5 +1,7 @@
--- VigiGen — 022: sincronização manual (botão "Sincronizar" do painel).
--- NÃO APLICAR sem a aprovação do Baden.
+-- VigiGen — 023: sincronização manual (botão "Sincronizar" do painel).
+-- APLICADA em produção em 18/11/2026, com a aprovação do Baden, sob o nome
+-- '022_sincronizacao_manual' no histórico do Supabase (renumerada para 023 depois,
+-- porque a 022 é a 022_matricula da branch claude/mapa-interativo).
 --
 -- O botão dispara, fora de hora, as MESMAS cargas que o agendamento já roda:
 -- as tarefas do pg_cron de início de carga ('vigigen-semanal-*', 'vigigen-diario-*',
